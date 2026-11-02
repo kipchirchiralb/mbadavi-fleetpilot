@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import { analyze } from '../src/importer/index.js';
+import { mergeImport } from '../src/importer/merge.js';
+import { monthlySummary } from '../src/summary.js';
+const res = analyze(JSON.parse(fs.readFileSync('workbook.json','utf8')), { today:'2026-10-24' });
+const db = { vehicles:[], drivers:[], clients:[], rentals:[], expenses:[], loans:[], insurance:[], chama:[], nextId:1, settings:{} };
+mergeImport(db, res, { today:'2026-10-24' });
+const mine = monthlySummary(db, '2025-11', '2026-10');
+const W = JSON.parse(fs.readFileSync('workbook.json','utf8')).Sheet1;
+const sheet = {}; W.slice(3,15).forEach(r => sheet[r[0]] = r);
+const names = ['NOVEMBER','DECEMBER','JANUARY','FEBUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER'];
+const cols = ['fuel','subhire','subhireDriver','allowance','insurance','carwash','airport','garage','rent'];
+console.log('month       ' + cols.map(c=>c.padEnd(14)).join(''));
+names.forEach((n,i) => { const m = mine.find(x => x.month === (i<2?'2025-':'2026-') + String(((i+10)%12)+1).padStart(2,'0')) || {};
+  const s = sheet[n]; console.log(n.padEnd(11), cols.map((c,k)=>`${m[c]||0}/${s[k+1]||0}`.padEnd(14)).join('')); });
+console.log('(app / Sheet1)');

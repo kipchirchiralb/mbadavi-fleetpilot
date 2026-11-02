@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import { analyze } from '../src/importer/index.js';
+import { mergeImport } from '../src/importer/merge.js';
+const W = JSON.parse(fs.readFileSync('workbook.json','utf8'));
+const res = analyze(W, { today: '2026-10-24' });
+const db = { vehicles:[],drivers:[],clients:[],bookings:[],rentals:[],expenses:[],payments:[],accounts:[],loans:[],insurance:[],chama:[],settings:{},nextId:1 };
+const log = mergeImport(db, res, { today: '2026-10-24' });
+console.log(log.added, log.skipped);
+const billed = db.rentals.reduce((s,r)=>s+r.amount,0), paid = db.payments.filter(p=>p.rentalId!=='').reduce((s,p)=>s+p.amount,0);
+console.log('rentals', db.rentals.length, 'billed', billed, 'linked paid', paid, 'owed', billed-paid);
+console.log('unlinked', db.payments.filter(p=>p.rentalId==='').reduce((s,p)=>s+p.amount,0), 'invoices', db.invoices.length);
+console.log('rentals with invoice no', db.rentals.filter(r=>r.invoice).length, 'paid flag', db.rentals.filter(r=>r.paid).length);
+const log2 = mergeImport(db, res, { today: '2026-10-24' }); console.log('second run added', log2.added, 'payments', db.payments.length);

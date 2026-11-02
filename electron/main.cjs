@@ -1,5 +1,6 @@
 const { app, BrowserWindow, shell } = require("electron");
 const path = require("node:path");
+const { registerLedgerFile } = require("./ledgerFile.cjs");
 
 const DIST_DIR = path.join(__dirname, "..", "dist");
 
@@ -14,6 +15,8 @@ function createWindow() {
     autoHideMenuBar: true,
     icon: path.join(DIST_DIR, "favicon.ico"),
     webPreferences: {
+      // Gives the page window.fleetDesktop: the database file in %APPDATA%\FleetPilot (see ledgerFile.cjs).
+      preload: path.join(__dirname, "ledgerPreload.cjs"),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true
@@ -50,6 +53,8 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(() => {
+    // Database handlers and the "save before closing" hook must exist before the window opens.
+    registerLedgerFile();
     createWindow();
 
     app.on("activate", () => {

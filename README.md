@@ -17,40 +17,36 @@ npm run preview            # serve dist/ locally
 
 ## Project layout
 
+The app source is the v22 update (see `docs/CHANGES-v22.txt` for every change from v3 to v22).
+The previous modular version is kept untouched in `backup-before-v22/`.
+
 ```
 electron/
   main.cjs              Electron main process: window, single-instance lock, link handling
-index.html              App markup (Vite entry)
+  ledgerFile.cjs        Database file in %APPDATA%\FleetPilot (save on every change, monthly copies, format upgrades)
+  ledgerPreload.cjs     Preload: gives the page window.fleetDesktop (the only door to that folder)
+index.html              App markup and styles (Vite entry, self-contained)
 public/                 Icons copied as-is into the build
 build/                  electron-builder resources (app icon)
 src/
-  main.js               Renderer bootstrap: picks the data repository, registers the service worker, starts the app
-  data/                 Persistence boundary
-    repository.js       LocalFleetRepository (IndexedDB)
-    serverRepository.js ServerFleetRepository (optional SQLite API, see docs/sqlite-server.md)
-  app/
-    index.js            startApp(): wires every module's event handlers in order, then loads the ledger
-    app.js              renderAll() / initial ledger load
-    core/               Shared state, autosave, periods, closed-month locking, validation, formatting, sanitizer
-    ui/                 Shell (nav, full screen), dialogs and toasts, form edit mode, shared selects,
-                        record navigation, app-wide keyboard/usability behaviour (enhancements.js)
-    features/           Vehicles, drivers, allowances, clients, bookings, rentals, expenses, payments,
-                        file save/load, month compare, global search, watchlist, admin PIN, daily info & alerts
-    dashboard/          Dashboard cards/widgets, trend charts, fleet chart, upcoming bookings
-    reports/            Period ranges, reports, analysis, statistics, leased cars, vehicle & expense statements
-    excel/              Workbook schema, data sheets, styled report sheets, workbook <-> ledger conversion
-  styles/               CSS split by area; index.css imports them in cascade order
-  assets/images/        Logo and watermark images
-server/                 Optional Node + SQLite API (its own package.json)
-docs/                   Additional guides
+  main.js               Bootstrap: error bar, ExcelJS, IndexedDB fallback, table tools, keyboard nav, then ledger.js
+  ledger.js             The app core: state, screens, save/open, dashboard, reports
+  dbPersist.js          Opens/saves the desktop database file; moves old browser storage into it once
+  data/repository.js    IndexedDB storage (browser use, and fallback in the .exe)
+  importer/             Excel import of the PERFOMANCE workbook (rentals, expenses, invoices, payments, admin sheets)
+  calendar.js, holidays.js, today.js, idle.js           Calendar, Kenyan holidays, Today box, idle screen
+  performance.js, carPerf.js, balance.js, chips.js      Performance, per-car figures, balance check, filter chips
+  fuel*.js, coop.js, subhire*.js, loans.js              Fuel account, Coop, Sub-hire, Loans
+  payRoute.js, payUi.js                                 Payments hub (money in / money out)
+  pilot*.js, pages.js, ownerSheets.js, fileLayout.js    Admin (Pilot), Pages, Excel save layout
+test/                   Node tests (*.test.mjs) and older headless-browser scripts (*.py)
+server/                 Old optional SQLite API: no longer used by the app
+docs/                   CHANGES-v22.txt, WORKFLOW.md, desktop-database.txt
 ```
 
-### Module conventions
+### Tests
 
-- Shared ledger state (`db`, `dirty`, current file, …) lives in `src/app/core/state.js`. Other modules read it through imports and change it only through the exported setters (`setDb`, `setDirty`, …), because ES module imports are read-only.
-- A module's top level only declares things. DOM event wiring lives in that module's `init…()` function, and `src/app/index.js` calls those in a fixed order once every module has loaded.
-- User-entered text placed into HTML templates is wrapped in `escapeHTML()`. As a second layer, all dynamic `innerHTML` goes through the sanitizer that `core/sanitize.js` installs, which removes scripts, inline event handlers and `javascript:` URLs. Production builds also carry a Content-Security-Policy (see `vite.config.js`).
-- Notifications use `toast(message, type)`, where `type` is `'error'` (orange-red), `'success'` (green) or `'info'` (the default).
+Run each from inside `test/`, e.g. `cd test; node yearround.test.mjs`. All 25 `*.test.mjs` files pass.
 
 ## Troubleshooting
 
@@ -59,9 +55,11 @@ docs/                   Additional guides
 
 ## Data
 
-`src/data/repository.js` is the local persistence boundary. The whole working ledger is saved to IndexedDB after each change and restored when the app opens. Excel workbooks are the portable format for import, export and backup. To move data between devices, export to Excel.
+In the desktop app the ledger is a file: `%APPDATA%\FleetPilot\databases\<name>.fpdb.json`, written about half a second after each change and again when the window closes. One safety copy per month goes to `copies\`. Installing a newer version never touches this folder. Pilot > Database chooses which database opens at start.
 
-To keep data in a shared SQLite database instead, set `VITE_API_URL` (see `.env.example`) and run the server in `server/`. The details are in [docs/sqlite-server.md](docs/sqlite-server.md). If `VITE_API_URL` is blank, the app stays local-only.
+On the first start after the update, the data in the old browser storage (IndexedDB) is moved into the file once. In a plain browser (`npm run dev`) the app keeps using IndexedDB.
+
+Excel is only used when you ask: File & backup > Save (to Excel) / Import.
 
 The admin PIN is not authentication.
 
