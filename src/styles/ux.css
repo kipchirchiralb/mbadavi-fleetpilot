@@ -1,0 +1,65 @@
+/* App-wide usability: keyboard focus, busy states, success callouts, splash skip,
+   and reduced motion. Loaded after the theme so it applies on top of it. */
+
+/* A visible ring for keyboard users only (mouse clicks don't trigger :focus-visible). */
+:where(button, a, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.nav button:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Buttons that are busy (save/load running) or disabled look it. */
+button:disabled,
+button[aria-busy="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+button[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* The ✕ delete button was a bare 13px glyph; give it a real hit area. */
+.row-del {
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+}
+.row-del:hover {
+  background: rgba(224, 90, 82, 0.1);
+}
+
+/* Positive empty states, e.g. "No current alerts". */
+.success-callout {
+  padding: 12px 14px;
+  border: 1px solid rgba(29, 127, 69, 0.35);
+  border-left: 5px solid var(--toast-success, #1d7f45);
+  border-radius: 9px;
+  background: rgba(29, 127, 69, 0.1);
+  color: var(--toast-success, #1d7f45);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Clicking the splash (or pressing any key) fades it out immediately. */
+#introSplash.skip {
+  animation: introFadeOut 0.25s ease forwards;
+  animation-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The splash only disappears through its fade-out animation, so hide it outright. */
+  #introSplash {
+    display: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

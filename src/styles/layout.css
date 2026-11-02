@@ -1,0 +1,229 @@
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.brand {
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-badge {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #0a0d11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.brand-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+  box-sizing: border-box;
+}
+@keyframes idleLogoSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.brand-badge img {
+  animation: idleLogoSpin 12s linear infinite;
+}
+.brand-text {
+  min-width: 0;
+}
+.brand-mark {
+  font-family: var(--mono);
+  color: var(--amber);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand-name {
+  font-size: 19px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.nav {
+  padding: 14px 10px;
+}
+.nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 14px;
+  font-family: var(--sans);
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+.nav button .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  flex-shrink: 0;
+}
+.nav button {
+  position: relative;
+}
+.nav-reminder-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  flex-shrink: 0;
+  margin-left: auto;
+  box-shadow: 0 0 0 2px var(--panel);
+}
+.row-reminder-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  margin-right: 6px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.row-reminder-dot:hover {
+  box-shadow: 0 0 0 3px rgba(217, 105, 95, 0.25);
+}
+.nav button:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+}
+.nav button.active {
+  background: var(--panel-2);
+  color: var(--amber);
+}
+.nav button.active .dot {
+  background: var(--amber);
+}
+.filebox {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+.filebox .status {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.filebox .status .dirty {
+  color: var(--amber);
+}
+.filebox .status .clean {
+  color: var(--green);
+}
+.app-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+.btn {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-family: var(--sans);
+  cursor: pointer;
+  margin-bottom: 7px;
+  text-align: center;
+}
+.btn:hover {
+  border-color: var(--amber-dim);
+}
+.btn.primary {
+  background: var(--amber);
+  color: #1a1305;
+  border-color: var(--amber);
+  font-weight: 600;
+}
+.btn.primary:hover {
+  opacity: 0.92;
+}
+.btn.update {
+  border-color: var(--green);
+  color: var(--green);
+}
+.btn.update:hover {
+  background: var(--panel-2);
+}
+input[type="file"] {
+  display: none;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 28px 34px 60px;
+  max-width: 1180px;
+  height: 100vh;
+  overflow-y: auto;
+}
+h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+.subtitle {
+  color: var(--ink-dim);
+  font-size: 13.5px;
+  margin: 0 0 24px;
+}
+.panel {
+  display: none;
+}
+.panel.active {
+  display: block;
+}
+.panel.active > h1:first-child,
+.panel.active > .title-row:first-child {
+  position: sticky;
+  top: -1px;
+  z-index: 20;
+  background: linear-gradient(
+    180deg,
+    rgba(11, 14, 18, 0.98),
+    rgba(11, 14, 18, 0.94) 78%,
+    rgba(11, 14, 18, 0)
+  );
+  padding-top: 2px;
+  padding-bottom: 14px;
+  margin-bottom: 0;
+}

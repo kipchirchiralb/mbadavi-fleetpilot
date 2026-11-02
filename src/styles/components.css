@@ -1,0 +1,280 @@
+/* Cards / grid — plain auto-fit grid by default (Reports, Analysis, Expenses,
+     Vehicle cards, etc. all use this, so they get a real fair-share width each and
+     never get squeezed down to a 1/12 sliver). Only the Dashboard's own draggable/
+     resizable tiles (#dashCards) opt into the 12-column span system below. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+  align-items: stretch;
+}
+#dashCards {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.card.tint-amber {
+  background: linear-gradient(
+    180deg,
+    rgba(232, 163, 61, 0.1),
+    rgba(232, 163, 61, 0.02) 70%
+  );
+  border-color: rgba(232, 163, 61, 0.3);
+}
+.card.tint-green {
+  background: linear-gradient(
+    180deg,
+    rgba(79, 158, 110, 0.1),
+    rgba(79, 158, 110, 0.02) 70%
+  );
+  border-color: rgba(79, 158, 110, 0.3);
+}
+.card.tint-red {
+  background: linear-gradient(
+    180deg,
+    rgba(217, 105, 95, 0.1),
+    rgba(217, 105, 95, 0.02) 70%
+  );
+  border-color: rgba(217, 105, 95, 0.3);
+}
+.card.tint-fuel {
+  background: linear-gradient(
+    180deg,
+    rgba(224, 121, 59, 0.1),
+    rgba(224, 121, 59, 0.02) 70%
+  );
+  border-color: rgba(224, 121, 59, 0.3);
+}
+.card .card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.card .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-bottom: 0;
+}
+.card .card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-dim);
+  flex-shrink: 0;
+}
+.card .card-icon svg {
+  width: 15px;
+  height: 15px;
+}
+.card .value {
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.card .amber {
+  color: var(--amber);
+}
+.card .green {
+  color: var(--green);
+}
+.card .red {
+  color: var(--red);
+}
+.card .fuel {
+  color: var(--fuel);
+}
+.card .card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 11.5px;
+}
+.card {
+  position: relative;
+}
+.card .card-tools {
+  display: none;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.dash-editing .card .card-tools {
+  display: flex;
+}
+.dash-editing .card {
+  cursor: grab;
+  border-style: dashed;
+  padding-top: 38px;
+}
+.dash-editing .card.dragging {
+  opacity: 0.35;
+}
+.dash-editing .card.drag-over {
+  border-color: var(--amber);
+}
+.card-tools button {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--ink-dim);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.card-tools button:hover {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+}
+.card-tools button.active {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+#dashCards .card.size-sm {
+  grid-column: span 3;
+}
+#dashCards .card.size-md {
+  grid-column: span 4;
+}
+#dashCards .card.size-lg {
+  grid-column: span 6;
+}
+#hiddenWidgetsTray {
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -8px 0 20px;
+}
+#hiddenWidgetsTray.show {
+  display: flex;
+}
+#hiddenWidgetsTray button {
+  width: auto;
+  padding: 6px 12px;
+  margin: 0;
+  font-size: 12px;
+}
+.card .delta {
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.card .delta.up {
+  color: var(--green);
+}
+.card .delta.down {
+  color: var(--red);
+}
+.card .badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.trend-panels {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.trend-panel {
+  flex: 1;
+  min-width: 320px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.trend-panel .trend-head {
+  padding: 14px 16px 0;
+}
+.trend-panel .trend-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.trend-panel .trend-sub {
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+.trend-panel .trend-body {
+  padding: 8px 12px 4px;
+}
+.trend-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 11.5px;
+  color: var(--ink-dim);
+  padding: 0 16px 14px;
+}
+.trend-legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+th {
+  text-align: left;
+  color: var(--ink-faint);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+}
+td.num,
+th.num {
+  font-family: var(--mono);
+  text-align: right;
+}
+tr:hover td {
+  background: var(--panel-2);
+}
+.table-wrap {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}

@@ -1,0 +1,37 @@
+/* Branded backgrounds */
+body[data-panel] .main {
+  background-color: rgba(11, 14, 18, 0.96);
+  background-position: right 12% center;
+  background-size: 520px;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-image: url("../assets/images/watermark.png");
+}
+
+/* Full screen toggle */
+.fs-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 80;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fs-toggle:hover {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+}
+@media print {
+  .fs-toggle {
+    display: none !important;
+  }
+}

@@ -1,0 +1,2118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mbadavi Fleetpilot — Fleet Ledger</title>
+
+    <meta name="theme-color" content="#0B0E12" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Fleet Ledger" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/src/styles/index.css" />
+  </head>
+  <body data-panel="dashboard">
+    <div id="introSplash" title="Click to skip">
+      <img
+        class="intro-logo"
+        alt="Mbadavi Investment Limited"
+        src="/src/assets/images/intro-logo.png"
+      />
+      <div class="intro-words">
+        <span>MBADAVI</span><span>INVESTMENT</span><span>LIMITED</span>
+      </div>
+      <div class="intro-motto">
+        <span class="intro-line"></span><span>Your Most Reliable Partner</span
+        ><span class="intro-line right"></span>
+      </div>
+    </div>
+    <button class="fs-toggle" id="btnFullscreen" title="Full screen">⛶</button>
+    <div class="app">
+      <div class="sidebar">
+        <div class="brand">
+          <div class="brand-badge">
+            <img
+              src="/src/assets/images/brand-logo.png"
+              alt="Mbadavi logo"
+            />
+          </div>
+          <div class="brand-text">
+            <div class="brand-mark">Mbadavi Investment Limited</div>
+            <div class="brand-name">Log</div>
+          </div>
+        </div>
+        <div class="nav" id="nav">
+          <button data-panel="dashboard" class="active">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"
+                /></svg></span
+            ><span class="label-txt">Dashboard</span>
+          </button>
+          <button data-panel="vehicles">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M5 17h14l1-6-2-5H6L4 11l1 6Zm0 0v2m14-2v2M7 14h.01M17 14h.01M6 6l-1 4h14l-1-4"
+                />
+                <circle cx="7" cy="17" r="2" />
+                <circle cx="17" cy="17" r="2" /></svg></span
+            ><span class="label-txt">Vehicles</span>
+          </button>
+          <button data-panel="drivers">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c.8-4 3.4-6 8-6s7.2 2 8 6" /></svg></span
+            ><span class="label-txt">Drivers</span>
+          </button>
+          <button data-panel="clients">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3 20c.5-3.3 2.5-5 6-5s5.5 1.7 6 5" />
+                <path
+                  d="M16 5.5a3 3 0 0 1 0 5.5M17 15c2.2.2 3.5 1.5 4 4"
+                /></svg></span
+            ><span class="label-txt">Clients</span>
+          </button>
+          <button data-panel="bookings">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M7 3v4M17 3v4M3 10h18M7 14h3M7 17h6" /></svg></span
+            ><span class="label-txt">Bookings</span
+            ><span
+              class="nav-reminder-dot"
+              id="navBookingsBadge"
+              style="display: none"
+              title="Pickups due today or tomorrow"
+            ></span>
+          </button>
+          <button data-panel="rentals">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 7h10l3 4v6H4v-6l3-4Z" />
+                <path d="M4 12h16M8 17v2m8-2v2M8 7l1-3h6l1 3" /></svg></span
+            ><span class="label-txt">Rentals</span>
+          </button>
+          <button data-panel="payments">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M3 10h18M7 15h4" /></svg></span
+            ><span class="label-txt">Payments</span>
+          </button>
+          <button data-panel="expenses">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 3h9l3 3v15H6V3Z" />
+                <path d="M15 3v4h4M9 11h6M9 15h4" /></svg></span
+            ><span class="label-txt">Expenses</span>
+          </button>
+          <button data-panel="reports">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 20V10m7 10V4m7 16v-7" />
+                <path d="M3 20h18" /></svg></span
+            ><span class="label-txt">Reports</span>
+          </button>
+          <button data-panel="analysis">
+            <span class="dot"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 18 9 12l4 3 7-9" />
+                <path d="M17 6h3v3" /></svg></span
+            ><span class="label-txt">Analysis</span>
+          </button>
+        </div>
+        <div class="filebox">
+          <div class="status" id="fileStatus">
+            Local ledger saves automatically.<br />Export an Excel backup
+            whenever needed.
+          </div>
+          <button
+            class="btn"
+            id="rolloverBanner"
+            style="
+              display: none;
+              border-color: var(--amber-dim);
+              color: var(--amber);
+              text-align: left;
+            "
+          >
+            <span id="rolloverBannerText"></span>
+          </button>
+          <button class="btn primary" id="btnSave">
+            💾 Save database file
+          </button>
+          <button class="btn update" id="btnUpdate">
+            🔄 Update existing file
+          </button>
+          <button class="btn" id="btnLoad">📂 Open database file</button>
+          <button class="btn" id="btnAdminPin">
+            🔒 Set / change admin PIN
+          </button>
+          <div
+            style="
+              margin: 10px 0 4px;
+              padding-top: 8px;
+              border-top: 1px solid var(--line);
+              font-size: 11px;
+              color: var(--ink-faint);
+              font-family: var(--mono);
+              letter-spacing: 0.02em;
+            "
+          >
+            SHEETS IN SAVED FILE
+          </div>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: 7px;
+              font-size: 12px;
+              color: var(--ink-dim);
+              margin-bottom: 6px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="chkIncludeStatement"
+              checked
+              style="margin: 0"
+            />
+            Formatted statement sheet
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: 7px;
+              font-size: 12px;
+              color: var(--ink-dim);
+              margin-bottom: 6px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="chkIncludeExpenseReport"
+              style="margin: 0"
+            />
+            Expense report sheet
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: 7px;
+              font-size: 12px;
+              color: var(--ink-dim);
+              margin-bottom: 6px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="chkIncludeFuelReport"
+              style="margin: 0"
+            />
+            Fuel report sheet
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: 7px;
+              font-size: 12px;
+              color: var(--ink-dim);
+              margin-bottom: 2px;
+              cursor: pointer;
+            "
+          >
+            <input
+              type="checkbox"
+              id="chkIncludeTotals"
+              checked
+              style="margin: 0"
+            />
+            Totals summary sheet
+          </label>
+          <input type="file" id="fileInput" accept=".xlsx" />
+          <div class="app-footer">@jiranisystem</div>
+        </div>
+      </div>
+
+      <div class="main">
+        <!-- DASHBOARD -->
+        <div class="panel active" id="panel-dashboard">
+          <div
+            class="dashboard-topbar"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 10px;
+            "
+          >
+            <h1 style="margin: 0">Dashboard</h1>
+            <div class="dashboard-actions">
+              <button
+                class="btn"
+                id="btnDailyInfo"
+                style="width: auto; padding: 8px 14px; margin: 0"
+              >
+                📅 Daily Info
+              </button>
+              <button
+                class="btn alert-btn"
+                id="btnAlerts"
+                style="width: auto; padding: 8px 14px; margin: 0"
+              >
+                🔔 Alerts <span class="alert-count" id="alertCount">0</span>
+              </button>
+              <div style="position: relative">
+                <button
+                  class="btn"
+                  id="btnGlobalSearchToggle"
+                  style="width: auto; padding: 8px 14px; margin: 0"
+                >
+                  🔍 Search everything
+                </button>
+                <div
+                  id="globalSearchBox"
+                  style="
+                    display: none;
+                    position: absolute;
+                    right: 0;
+                    top: calc(100% + 8px);
+                    z-index: 60;
+                    background: var(--panel);
+                    border: 1px solid var(--line);
+                    border-radius: 10px;
+                    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+                    width: 360px;
+                    max-width: 88vw;
+                    padding: 10px;
+                  "
+                >
+                  <input
+                    type="text"
+                    id="globalSearchInput"
+                    placeholder="Search vehicles, clients, bookings, rentals, expenses…"
+                    style="width: 100%; box-sizing: border-box"
+                  />
+                  <div
+                    id="globalSearchResults"
+                    style="max-height: 380px; overflow: auto; margin-top: 8px"
+                  >
+                    <div class="hint" style="margin: 4px 0">
+                      Start typing to search across the whole database.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="subtitle">
+            Your working ledger saves automatically on this device. Use
+            <b>Save database file</b> to export an Excel backup or transfer
+            data.
+          </p>
+
+          <!-- Daily/Weekly/Monthly/Yearly/Custom picker now lives only in Reports (see periodSeg
+           there) so it isn't duplicated here. These controls stay in the DOM — just hidden —
+           because the shared period logic (setPeriodType, syncPeriodDate, periodRange, etc.)
+           still reads and writes dash_rep_ref/dash_rep_start/dash_rep_end and keeps them in
+           sync with Reports' own inputs behind the scenes. -->
+          <div class="period-bar" id="dashPeriodBar" style="display: none">
+            <div class="seg" id="dashPeriodSeg">
+              <button data-p="daily">Daily</button>
+              <button data-p="weekly">Weekly</button>
+              <button data-p="monthly" class="active">Monthly</button>
+              <button data-p="yearly">Yearly</button>
+              <button data-p="custom">Custom</button>
+            </div>
+            <input type="date" id="dash_rep_ref" title="Reference date" />
+            <span id="dashCustomRange" style="display: none">
+              <input type="date" id="dash_rep_start" title="Start date" />
+              <input type="date" id="dash_rep_end" title="End date" />
+            </span>
+          </div>
+
+          <!-- OVERVIEW -->
+          <section class="dash-section">
+            <div class="dash-section-head">
+              <div class="dash-section-title">
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"
+                    /></svg
+                ></span>
+                Overview
+              </div>
+              <div class="dash-status-row">
+                <span class="dash-status-pill" id="dashLivePeriodLabel"></span>
+                <button
+                  class="btn"
+                  id="btnCustomizeDash"
+                  style="width: auto; padding: 7px 13px; margin: 0"
+                >
+                  🛠 Customize
+                </button>
+              </div>
+            </div>
+            <div
+              class="hint"
+              id="dashCardsModeLabel"
+              style="margin: -6px 0 12px"
+            ></div>
+            <div
+              class="hint"
+              id="dashEditHint"
+              style="display: none; margin: -2px 0 12px"
+            >
+              Drag a card by its dashed border to reorder it. Use S/M/L to
+              resize, ✕ to remove — removed cards move to the tray below to
+              bring back.
+            </div>
+            <div id="hiddenWidgetsTray"></div>
+            <div class="cards" id="dashCards"></div>
+          </section>
+
+          <!-- QUICK TOOLS -->
+          <section class="dash-section">
+            <div
+              id="compareBar"
+              class="dash-toolbar"
+              style="
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 10px;
+                background: var(--panel);
+                border: 1px solid var(--line);
+                border-radius: 10px;
+                padding: 10px 14px;
+              "
+            >
+              <button
+                class="btn"
+                id="btnCompareUpload"
+                style="width: auto; padding: 8px 14px; margin: 0"
+              >
+                📄 Compare vs a previous month's file
+              </button>
+              <button class="btn watch-btn" id="btnWatchlist">
+                🔖 Watchlist
+                <span class="watch-count" id="watchlistCount">0</span>
+              </button>
+              <input
+                type="file"
+                id="compareFileInput"
+                accept=".xlsx"
+                style="display: none"
+              />
+              <span
+                id="compareStatus"
+                style="font-size: 12.5px; color: var(--ink-dim)"
+              ></span>
+              <button
+                class="btn"
+                id="btnCompareClear"
+                style="
+                  display: none;
+                  width: auto;
+                  padding: 8px 14px;
+                  margin: 0 0 0 auto;
+                "
+              >
+                ✕ Clear comparison
+              </button>
+            </div>
+          </section>
+
+          <!-- PERFORMANCE TRENDS -->
+          <section class="dash-section">
+            <div class="dash-section-head">
+              <div class="dash-section-title">
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 17l6-6 4 4 8-8" />
+                    <path d="M15 7h6v6" /></svg
+                ></span>
+                Performance trends
+              </div>
+            </div>
+            <div class="trend-panels">
+              <div class="trend-panel">
+                <div class="trend-head">
+                  <h3>Revenue status</h3>
+                  <div class="trend-sub" id="trendSubtitle">
+                    Current month vs previous month
+                  </div>
+                </div>
+                <div class="trend-body" id="trendChartSvg"></div>
+                <div class="trend-legend">
+                  <span
+                    ><span class="dot" style="background: #2e9be6"></span
+                    >Previous month</span
+                  >
+                  <span
+                    ><span class="dot" style="background: var(--green)"></span
+                    >Current month</span
+                  >
+                </div>
+              </div>
+              <div class="trend-panel">
+                <div class="trend-head">
+                  <h3>Cash flow summary</h3>
+                  <div class="trend-sub" id="cashFlowSubtitle">—</div>
+                </div>
+                <div class="trend-body" id="cashFlowSvg"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- LIVE OPERATIONS -->
+          <section class="dash-section">
+            <div class="dash-section-head">
+              <div class="dash-section-title">
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="7.5" cy="15.5" r="4.5" />
+                    <path d="m10.8 12.2 8.2-8.2" />
+                    <path d="m16 6 2 2M13.5 8.5l2 2" /></svg
+                ></span>
+                Live operations
+              </div>
+            </div>
+            <div class="dash-grid-2">
+              <div class="table-wrap">
+                <div class="table-head">
+                  <h3>Vehicles currently out on rent</h3>
+                </div>
+                <div class="table-scroll">
+                  <table id="dashActiveTable">
+                    <thead>
+                      <tr>
+                        <th>Reg No</th>
+                        <th>Vehicle</th>
+                        <th>Client</th>
+                        <th>Contract No</th>
+                        <th>Due back</th>
+                        <th class="num">Daily rate</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <div class="table-head"><h3>Available bookings</h3></div>
+                <div class="table-scroll">
+                  <table id="dashBookingsTable">
+                    <thead>
+                      <tr>
+                        <th>Vehicle</th>
+                        <th>Client</th>
+                        <th>Booked on</th>
+                        <th>Planned pickup</th>
+                        <th>Planned return</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- FLEET STATUS -->
+          <section class="dash-section" style="margin-bottom: 8px">
+            <div class="table-wrap" style="margin-bottom: 0">
+              <div class="table-head">
+                <h3>
+                  <span
+                    class="th-icon"
+                    style="
+                      width: auto;
+                      height: auto;
+                      background: none;
+                      border: none;
+                      color: var(--amber);
+                    "
+                    ><svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      style="width: 15px; height: 15px"
+                    >
+                      <path
+                        d="M5 17h14l1-6-2-5H6L4 11l1 6Zm0 0v2m14-2v2M7 14h.01M17 14h.01M6 6l-1 4h14l-1-4"
+                      />
+                      <circle cx="7" cy="17" r="2" />
+                      <circle cx="17" cy="17" r="2" /></svg></span
+                  >Fleet overview
+                </h3>
+                <div class="seg" id="dashChartSeg">
+                  <button data-c="pie">Pie chart</button>
+                  <button data-c="bar">Bar graph</button>
+                </div>
+              </div>
+              <div
+                style="
+                  padding: 18px 20px;
+                  display: flex;
+                  gap: 24px;
+                  flex-wrap: wrap;
+                  align-items: center;
+                "
+              >
+                <canvas
+                  id="dashChartCanvas"
+                  width="260"
+                  height="260"
+                  style="max-width: 260px"
+                ></canvas>
+                <div
+                  id="dashChartLegend"
+                  style="flex: 1; min-width: 200px"
+                ></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="modal-overlay" id="dailyInfoOverlay" aria-hidden="true">
+            <div class="modal-box daily-modal-box">
+              <div class="modal-head">
+                <div>
+                  <h2>📅 Daily Information</h2>
+                  <p>
+                    Operational and financial activity for the selected date.
+                  </p>
+                </div>
+                <button class="modal-close" id="dailyInfoClose">✕</button>
+              </div>
+              <div class="modal-body">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    margin-bottom: 15px;
+                  "
+                >
+                  <label
+                    for="dailyInfoDate"
+                    style="font-size: 12px; color: var(--ink-dim)"
+                    >Date</label
+                  >
+                  <input type="date" id="dailyInfoDate" />
+                  <button
+                    class="btn"
+                    id="dailyInfoToday"
+                    style="width: auto; padding: 7px 12px; margin: 0"
+                  >
+                    Today
+                  </button>
+                </div>
+                <div class="daily-kpis" id="dailyInfoKpis"></div>
+                <div class="table-wrap">
+                  <div class="table-head"><h3>Daily rentals</h3></div>
+                  <div class="table-scroll">
+                    <table id="dailyInfoRentalTable">
+                      <thead>
+                        <tr>
+                          <th>Vehicle</th>
+                          <th>Client</th>
+                          <th>Contract</th>
+                          <th>Pickup</th>
+                          <th>Return</th>
+                          <th>Status</th>
+                          <th class="num">Amount</th>
+                          <th class="num">Outstanding</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-overlay" id="alertsOverlay" aria-hidden="true">
+            <div class="modal-box daily-modal-box">
+              <div class="modal-head">
+                <div>
+                  <h2>🔔 Alerts</h2>
+                  <p>Items that may require attention in the fleet today.</p>
+                </div>
+                <button class="modal-close" id="alertsClose">✕</button>
+              </div>
+              <div class="modal-body" id="alertsBody"></div>
+            </div>
+          </div>
+
+          <div
+            class="modal-overlay"
+            id="extractNoticeOverlay"
+            aria-hidden="true"
+          >
+            <div class="modal-box extract-modal-box">
+              <div class="modal-head">
+                <div>
+                  <h2>⇥ Extracted from booking</h2>
+                  <p>Review before saving the rental.</p>
+                </div>
+                <button class="modal-close" id="extractNoticeClose">✕</button>
+              </div>
+              <div class="modal-body" id="extractNoticeBody"></div>
+              <div style="margin-top: 18px; text-align: right">
+                <button
+                  class="btn primary"
+                  id="extractNoticeGotIt"
+                  style="width: auto; padding: 9px 18px; margin: 0"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-overlay" id="watchlistOverlay" aria-hidden="true">
+            <div class="modal-box watch-modal-box">
+              <div class="modal-head">
+                <div>
+                  <h2>🔖 Watchlist</h2>
+                  <p>Items that deserve attention in the current database.</p>
+                </div>
+                <button class="modal-close" id="watchlistClose">✕</button>
+              </div>
+              <div class="modal-body" id="watchlistBody"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VEHICLES -->
+        <div class="panel" id="panel-vehicles">
+          <h1>Vehicles</h1>
+          <p class="subtitle">Your fleet.</p>
+          <div class="form-grid" id="vehicleForm">
+            <div>
+              <label>Reg No</label><input id="v_reg" placeholder="KBR 670E" />
+            </div>
+            <div>
+              <label>Make</label><input id="v_make" placeholder="Toyota" />
+            </div>
+            <div>
+              <label>Model</label><input id="v_model" placeholder="Fielder" />
+            </div>
+            <div>
+              <label>Year</label
+              ><input id="v_year" type="number" placeholder="2018" />
+            </div>
+            <div>
+              <label>Daily rate</label
+              ><input id="v_rate" type="number" placeholder="4500" />
+            </div>
+            <div>
+              <label>Owner name</label
+              ><input id="v_owner" placeholder="Company / owner name" />
+            </div>
+            <div>
+              <label>Status</label
+              ><select id="v_status">
+                <option>Available</option>
+                <option>Rented</option>
+                <option>Maintenance</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+          </div>
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px"
+            id="btnAddVehicle"
+          >
+            + Add vehicle
+          </button>
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"
+                    />
+                    <circle cx="7" cy="17" r="2" />
+                    <path d="M9 17h6" />
+                    <circle cx="17" cy="17" r="2" /></svg></span
+                >Fleet list
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="vehicleTable">
+                <thead>
+                  <tr>
+                    <th>Reg No</th>
+                    <th>Vehicle</th>
+                    <th>Owner</th>
+                    <th class="num">Daily rate</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- DRIVERS -->
+        <div class="panel" id="panel-drivers">
+          <h1>Drivers</h1>
+          <p class="subtitle">
+            Drivers on your books, the vehicle they're assigned to, and their
+            allowance.
+          </p>
+          <div class="form-grid" id="driverForm">
+            <div>
+              <label>Full name</label
+              ><input id="d_name" placeholder="John Kamau" />
+            </div>
+            <div>
+              <label>Phone</label
+              ><input id="d_phone" placeholder="0712345678" />
+            </div>
+            <div>
+              <label>License No.</label
+              ><input id="d_license" placeholder="DL998877" />
+            </div>
+            <div>
+              <label>Assigned vehicle</label
+              ><select id="d_vehicle">
+                <option value="">Unassigned</option>
+              </select>
+            </div>
+            <div>
+              <label>Allowance</label
+              ><input id="d_allowance" type="number" placeholder="500" />
+            </div>
+            <div>
+              <label>Status</label
+              ><select id="d_status">
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+          </div>
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px"
+            id="btnAddDriver"
+          >
+            + Add driver
+          </button>
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <circle cx="8" cy="11" r="2.2" />
+                    <path d="M4.5 17c.6-2 2-3 3.5-3s2.9 1 3.5 3" />
+                    <path d="M14 9h6M14 13h6M14 17h4" /></svg></span
+                >Driver list
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="driverTable">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>License No.</th>
+                    <th>Assigned vehicle</th>
+                    <th class="num">Allowance</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head"><h3>Weekly allowance log</h3></div>
+            <div
+              class="form-grid"
+              id="allowanceForm"
+              style="padding: 14px 16px 0"
+            >
+              <div>
+                <label>Driver</label
+                ><select id="al_driver"></select>
+              </div>
+              <div>
+                <label>Week starting</label><input id="al_week" type="date" />
+              </div>
+              <div>
+                <label>Amount</label
+                ><input id="al_amount" type="number" placeholder="0" />
+              </div>
+              <div>
+                <label>Note</label><input id="al_note" placeholder="Optional" />
+              </div>
+            </div>
+            <div style="padding: 0 16px 14px">
+              <button
+                class="btn primary"
+                style="width: auto; padding: 9px 18px"
+                id="btnAddAllowance"
+              >
+                + Add allowance payment
+              </button>
+            </div>
+            <div class="table-scroll">
+              <table id="allowanceTable">
+                <thead>
+                  <tr>
+                    <th>Driver</th>
+                    <th>Week starting</th>
+                    <th class="num">Amount</th>
+                    <th>Note</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head"><h3>Allowance summary by period</h3></div>
+            <div
+              class="period-bar"
+              style="padding: 14px 16px 0; margin-bottom: 8px"
+            >
+              <div class="seg" id="alPeriodSeg">
+                <button data-p="weekly">Weekly</button>
+                <button data-p="monthly" class="active">Monthly</button>
+                <button data-p="yearly">Yearly</button>
+                <button data-p="custom">Custom</button>
+              </div>
+              <input type="date" id="al_ref" title="Reference date" />
+              <span id="alCustomRange" style="display: none">
+                <input type="date" id="al_start" title="Start date" />
+                <input type="date" id="al_end" title="End date" />
+              </span>
+            </div>
+            <div
+              class="hint"
+              id="alPeriodLabel"
+              style="padding: 0 16px; margin-top: 0"
+            ></div>
+            <div class="table-scroll">
+              <table id="allowanceSummaryTable">
+                <thead>
+                  <tr>
+                    <th>Driver</th>
+                    <th class="num">Payments</th>
+                    <th class="num">Total paid</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLIENTS -->
+        <div class="panel" id="panel-clients">
+          <h1>Clients</h1>
+          <p class="subtitle">People who rent your cars.</p>
+          <div class="form-grid" id="clientForm">
+            <div>
+              <label>Full name</label
+              ><input id="c_name" placeholder="Jane Doe" />
+            </div>
+            <div>
+              <label>Phone</label
+              ><input id="c_phone" placeholder="0712345678" />
+            </div>
+            <div>
+              <label>ID number</label><input id="c_id" placeholder="12345678" />
+            </div>
+            <div>
+              <label>Driving license no.</label
+              ><input id="c_dl" placeholder="DL123456" />
+            </div>
+          </div>
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px"
+            id="btnAddClient"
+          >
+            + Add client
+          </button>
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <circle cx="8" cy="11" r="2.2" />
+                    <path d="M4.5 17c.6-2 2-3 3.5-3s2.9 1 3.5 3" />
+                    <path d="M14 9h6M14 13h6M14 17h4" /></svg></span
+                >Client list
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="clientTable">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>ID No.</th>
+                    <th>License No.</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOOKINGS -->
+        <div class="panel" id="panel-bookings">
+          <h1>Bookings</h1>
+          <p class="subtitle">
+            Advance reservations, before a car actually goes out. Once
+            confirmed, record the real handover under Rentals.
+          </p>
+          <div
+            class="table-wrap"
+            id="bookingReminderWrap"
+            style="display: none; border-color: var(--amber-dim)"
+          >
+            <div class="table-head">
+              <h3>🔔 Pickup reminders — due today or tomorrow</h3>
+            </div>
+            <div id="bookingReminderList" style="padding: 2px 16px 6px"></div>
+          </div>
+          <div class="form-grid" id="bookingForm">
+            <div>
+              <label>Vehicle</label
+              ><select id="bk_vehicle"></select>
+            </div>
+            <div>
+              <label>Client</label
+              ><select id="bk_client"></select>
+            </div>
+            <div>
+              <label>Booking date</label><input id="bk_date" type="date" />
+            </div>
+            <div>
+              <label>Planned pickup</label><input id="bk_pickup" type="date" />
+            </div>
+            <div>
+              <label>Planned return</label><input id="bk_return" type="date" />
+            </div>
+            <div>
+              <label>Deposit</label
+              ><input id="bk_deposit" type="number" placeholder="0" />
+            </div>
+            <div>
+              <label>Status</label
+              ><select id="bk_status">
+                <option>Pending</option>
+                <option>Confirmed</option>
+                <option>Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px"
+            id="btnAddBooking"
+          >
+            + Add booking
+          </button>
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="5" y="4" width="14" height="17" rx="2" />
+                    <rect x="9" y="2" width="6" height="4" rx="1" />
+                    <path d="M8 11h8M8 15h8M8 19h5" /></svg></span
+                >Booking list
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="bookingTable">
+                <thead>
+                  <tr>
+                    <th>Vehicle</th>
+                    <th>Client</th>
+                    <th>Booked on</th>
+                    <th>Planned pickup</th>
+                    <th>Planned return</th>
+                    <th class="num">Deposit</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- RENTALS -->
+        <div class="panel" id="panel-rentals">
+          <h1>Rentals</h1>
+          <p class="subtitle">
+            Every handover is one row. Amount is worked out automatically from
+            the daily rate × days. Return date/time can't be before pickup.
+          </p>
+          <div class="form-grid" id="rentalForm">
+            <div>
+              <label>Vehicle</label
+              ><select id="r_vehicle"></select>
+            </div>
+            <div>
+              <label>Client</label
+              ><select id="r_client"></select>
+            </div>
+            <div>
+              <label>Contract No</label
+              ><input id="r_contract" placeholder="CT-0001" />
+            </div>
+            <div>
+              <label>Invoice No</label
+              ><input id="r_invoice" placeholder="INV-0001" />
+            </div>
+            <div>
+              <label>Receipt No</label
+              ><input id="r_receipt" placeholder="RCT-0001" />
+            </div>
+            <div>
+              <label>Pickup date</label><input id="r_pickup" type="date" />
+            </div>
+            <div>
+              <label>Pickup time</label><input id="r_pickuptime" type="time" />
+            </div>
+            <div>
+              <label>Return date</label><input id="r_return" type="date" />
+            </div>
+            <div>
+              <label>Return time</label><input id="r_returntime" type="time" />
+            </div>
+            <div>
+              <label>Daily rate</label><input id="r_rate" type="number" />
+            </div>
+            <div>
+              <label>Mileage (km)</label
+              ><input id="r_mileage" type="number" min="0" placeholder="0" />
+            </div>
+            <div>
+              <label>Fuel — office-fronted (KSh)</label
+              ><input id="r_fuel" type="number" placeholder="0" />
+            </div>
+            <div>
+              <label>Fuel — charge to client (KSh)</label
+              ><input
+                id="r_fuel_charge"
+                type="number"
+                placeholder="Same as fronted"
+              />
+            </div>
+            <div>
+              <label>Status</label
+              ><select id="r_status">
+                <option>Active</option>
+                <option>Completed</option>
+                <option>Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <p class="hint" style="margin: -6px 0 12px">
+            Fuel here is fronted by the office and billed back to the client —
+            it's logged automatically under Expenses → Fuel and linked to this
+            rental. Leave "charge to client" blank to bill the exact amount
+            fronted, or set your own figure if the office is charging a
+            different amount.
+          </p>
+          <p
+            class="hint"
+            id="extractDepositHint"
+            style="display: none; margin: -6px 0 12px; color: var(--amber)"
+          ></p>
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px"
+            id="btnAddRental"
+          >
+            + Add rental
+          </button>
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="5" y="4" width="14" height="17" rx="2" />
+                    <rect x="9" y="2" width="6" height="4" rx="1" />
+                    <path d="M8 11h8M8 15h8M8 19h5" /></svg></span
+                >Rental history
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="rentalTable">
+                <thead>
+                  <tr>
+                    <th>Reg No</th>
+                    <th>Client</th>
+                    <th>Contract No</th>
+                    <th>Invoice No</th>
+                    <th>Receipt No</th>
+                    <th>Pickup</th>
+                    <th>Return</th>
+                    <th class="num">Days</th>
+                    <th class="num">Mileage (km)</th>
+                    <th class="num">Amount</th>
+                    <th class="num">Paid</th>
+                    <th class="num">Owed</th>
+                    <th class="num">Fuel</th>
+                    <th class="num">Charged</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAYMENTS -->
+        <div class="panel" id="panel-payments">
+          <h1>Payments</h1>
+          <p class="subtitle">
+            Money actually received from clients, tied to a rental. This is
+            separate from Revenue (the invoiced rental amount) — it's what lets
+            Rentals and Reports show what's Collected vs. still Outstanding.
+          </p>
+          <div class="form-grid" id="paymentForm">
+            <div>
+              <label>Rental</label>
+              <select id="p_rental"></select>
+              <div class="hint" id="p_hint" style="margin: 4px 0 0"></div>
+            </div>
+            <div><label>Date</label><input id="p_date" type="date" /></div>
+            <div>
+              <label>Amount received</label
+              ><input id="p_amount" type="number" />
+            </div>
+            <div>
+              <label>Method</label
+              ><select id="p_method">
+                <option>Cash</option>
+                <option>M-Pesa</option>
+                <option>Bank transfer</option>
+                <option>Card</option>
+                <option>Deposit</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Note</label><input id="p_note" placeholder="Optional" />
+            </div>
+          </div>
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px"
+            id="btnAddPayment"
+          >
+            + Add payment
+          </button>
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <path d="M2 10h20" />
+                    <path d="M6 15h4" /></svg></span
+                >Payment history
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="paymentTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Reg No</th>
+                    <th>Client</th>
+                    <th>Contract No</th>
+                    <th class="num">Amount</th>
+                    <th class="num">Paid</th>
+                    <th class="num">Outstanding</th>
+                    <th>Status</th>
+                    <th>Method</th>
+                    <th>Note</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPENSES -->
+        <div class="panel" id="panel-expenses">
+          <h1>Expenses</h1>
+          <p class="subtitle">
+            Fuel, maintenance, garage work, insurance, airport charges, parking,
+            driver allowances, owner payouts and leased car costs — anything
+            that eats into a vehicle's profit. Leave Vehicle as "Office /
+            General" for costs that aren't tied to one car — salaries, rent,
+            office fuel, airport runs, or any other office-wide spend.
+          </p>
+          <div class="form-grid" id="expenseForm">
+            <div id="e_vehicle_row">
+              <label>Vehicle</label
+              ><select id="e_vehicle"></select>
+            </div>
+            <div><label>Date</label><input id="e_date" type="date" /></div>
+            <div>
+              <label>Category</label
+              ><select id="e_cat">
+                <option>Fuel</option>
+                <option>Maintenance</option>
+                <option>Garage</option>
+                <option>Insurance</option>
+                <option>Cleaning</option>
+                <option>Airport</option>
+                <option>Parking</option>
+                <option>Driver allowance</option>
+                <option>Owner payout</option>
+                <option>Leased car</option>
+                <option>Salaries</option>
+                <option>Rent</option>
+                <option>Utilities</option>
+                <option>Bank Charges</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label id="e_desc_label">Description</label
+              ><input id="e_desc" placeholder="Brake pads" />
+            </div>
+            <div id="e_qty_row">
+              <label>Qty / count</label
+              ><input id="e_qty" type="number" placeholder="1" value="1" />
+            </div>
+            <div>
+              <label id="e_amount_label">Amount</label
+              ><input id="e_amount" type="number" />
+            </div>
+          </div>
+          <div id="e_billable_row" style="margin: -4px 0 10px">
+            <label
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                font-size: 12.5px;
+                color: var(--ink-dim);
+                cursor: pointer;
+              "
+            >
+              <input type="checkbox" id="e_billable" style="width: auto" />
+              Office-fronted — bill this fuel to a client
+            </label>
+          </div>
+          <div class="form-grid" id="e_billable_fields" style="display: none">
+            <div>
+              <label>Client to charge</label
+              ><select id="e_billable_client"></select>
+            </div>
+            <div>
+              <label>Amount to charge client</label
+              ><input id="e_billable_amount" type="number" placeholder="0" />
+            </div>
+          </div>
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px"
+            id="btnAddExpense"
+          >
+            + Add expense
+          </button>
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"
+                    />
+                    <path d="M8 7h8M8 11h8M8 15h5" /></svg></span
+                >Expense log
+              </h3>
+              <select
+                id="e_scope_filter"
+                style="
+                  padding: 6px 9px;
+                  background: var(--panel-2);
+                  border: 1px solid var(--line);
+                  border-radius: 6px;
+                  color: var(--ink);
+                  font-size: 12.5px;
+                  font-family: var(--sans);
+                "
+              >
+                <option value="all">All expenses</option>
+                <option value="vehicle">Vehicle-linked only</option>
+                <option value="office">Office / General only</option>
+              </select>
+            </div>
+            <div class="table-scroll">
+              <table id="expenseTable">
+                <thead>
+                  <tr>
+                    <th>Vehicle</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th class="num">Qty</th>
+                    <th class="num">Amount</th>
+                    <th>Billed to client</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- REPORTS -->
+        <div class="panel" id="panel-reports">
+          <h1>Reports &amp; statements</h1>
+          <p class="subtitle">
+            Revenue, expenses, owner payouts and net profit for any period — per
+            vehicle and fleet-wide.
+          </p>
+
+          <div class="table-wrap" style="margin: 0 0 18px">
+            <div class="table-head"><h3>Save month / year archive</h3></div>
+            <div style="padding: 14px 16px">
+              <p class="hint" style="margin: 0 0 12px">
+                Choose the current month or any previous month to create a clean
+                standalone file. A yearly archive becomes available once the
+                database contains records spanning
+                <b>at least 10 different calendar months</b>.
+              </p>
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  flex-wrap: wrap;
+                  align-items: center;
+                "
+              >
+                <button
+                  class="btn primary"
+                  style="width: auto; padding: 9px 18px"
+                  id="btnSaveThisMonth"
+                >
+                  💾 Save month / previous
+                </button>
+                <button
+                  class="btn"
+                  style="width: auto; padding: 9px 18px"
+                  id="btnSaveYear"
+                >
+                  🗓 Save year
+                </button>
+                <span class="schema-note" id="archiveMonthStatus"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="period-bar">
+            <div class="seg" id="periodSeg">
+              <button data-p="daily">Daily</button>
+              <button data-p="weekly">Weekly</button>
+              <button data-p="monthly" class="active">Monthly</button>
+              <button data-p="yearly">Yearly</button>
+              <button data-p="custom">Custom</button>
+            </div>
+            <input type="date" id="rep_ref" title="Reference date" />
+            <span id="customRange" style="display: none">
+              <input type="date" id="rep_start" title="Start date" />
+              <input type="date" id="rep_end" title="End date" />
+            </span>
+            <button
+              class="btn"
+              style="width: auto; padding: 8px 14px; margin: 0"
+              id="btnPrint"
+            >
+              🖨 Print statement
+            </button>
+            <button
+              class="btn"
+              style="width: auto; padding: 8px 14px; margin: 0"
+              id="btnExpenseStatement"
+            >
+              📊 Expense statement
+            </button>
+            <button
+              class="btn update"
+              style="width: auto; padding: 8px 14px; margin: 0"
+              id="btnRestoreCardsDefault"
+              title="Make the Dashboard cards show all-time totals from the whole data file, regardless of any period picked here"
+            >
+              ↺ Restore cards to default
+            </button>
+          </div>
+          <div class="hint" id="periodLabel"></div>
+          <div class="hint" id="cardsModeLabel" style="margin-top: -8px"></div>
+
+          <div class="cards" id="repCards"></div>
+
+          <div class="table-wrap">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    />
+                    <path d="M14 2v6h6" />
+                    <path d="M8 13h8M8 17h8M8 9h2" /></svg></span
+                >Per-vehicle statement
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="repTable">
+                <thead>
+                  <tr>
+                    <th>Reg No</th>
+                    <th>Vehicle</th>
+                    <th class="num">Days</th>
+                    <th class="num">Revenue</th>
+                    <th class="num">Collected</th>
+                    <th class="num">Outstanding</th>
+                    <th>Status</th>
+                    <th class="num">Expenses</th>
+                    <th class="num">Net</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 3v18h18" />
+                    <rect x="7" y="12" width="3" height="6" />
+                    <rect x="12" y="8" width="3" height="10" />
+                    <rect x="17" y="14" width="3" height="4" /></svg></span
+                >Revenue by vehicle (this period)
+              </h3>
+            </div>
+            <div style="padding: 16px" id="repBars"></div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"
+                    />
+                    <circle cx="7" cy="17" r="2" />
+                    <path d="M9 17h6" />
+                    <circle cx="17" cy="17" r="2" /></svg></span
+                >Leased cars — currently out on rent
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="repLeasedTable">
+                <thead>
+                  <tr>
+                    <th>Reg No</th>
+                    <th>Vehicle</th>
+                    <th>Client</th>
+                    <th>Contract No</th>
+                    <th>Pickup</th>
+                    <th>Due back</th>
+                    <th class="num">Daily rate</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    />
+                    <path d="M14 2v6h6" />
+                    <path d="M8 13h8M8 17h8M8 9h2" /></svg></span
+                >Individual vehicle statement
+              </h3>
+            </div>
+            <div style="padding: 14px 16px 4px">
+              <select
+                id="rep_vehicle_pick"
+                style="
+                  padding: 8px 10px;
+                  background: var(--panel-2);
+                  border: 1px solid var(--line);
+                  border-radius: 6px;
+                  color: var(--ink);
+                  font-size: 13px;
+                  font-family: var(--sans);
+                  min-width: 220px;
+                "
+              >
+                <option value="">Select a vehicle…</option>
+              </select>
+            </div>
+            <div
+              class="cards"
+              id="repVehicleCards"
+              style="padding: 0 16px"
+            ></div>
+            <div class="table-scroll">
+              <table id="repVehicleRentalTable">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Contract No</th>
+                    <th>Pickup</th>
+                    <th>Return</th>
+                    <th class="num">Days</th>
+                    <th class="num">Mileage (km)</th>
+                    <th class="num">Amount</th>
+                    <th class="num">Paid</th>
+                    <th class="num">Owed</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="table-scroll">
+              <table id="repVehicleExpenseTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th class="num">Qty</th>
+                    <th class="num">Amount</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANALYSIS -->
+        <div class="panel" id="panel-analysis">
+          <h1>Multi-month analysis</h1>
+          <p class="subtitle">
+            Load several monthly database files together to see combined totals
+            and trends across months. This is read-only — it never changes your
+            live working file.
+          </p>
+          <input
+            type="file"
+            id="analysisFileInput"
+            accept=".xlsx"
+            multiple
+            style="display: none"
+          />
+          <button
+            class="btn primary"
+            style="width: auto; padding: 9px 18px; display: inline-block"
+            id="btnLoadAnalysisFiles"
+          >
+            📂 Load monthly files…
+          </button>
+          <button
+            class="btn"
+            style="
+              width: auto;
+              padding: 9px 18px;
+              margin-left: 8px;
+              display: inline-block;
+            "
+            id="btnClearAnalysisFiles"
+          >
+            Clear loaded files
+          </button>
+
+          <div
+            class="table-wrap"
+            style="margin-top: 16px; display: none"
+            id="analysisFilesWrap"
+          >
+            <div class="table-head"><h3>Loaded months</h3></div>
+            <div class="table-scroll">
+              <table id="analysisFilesTable">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Period</th>
+                    <th class="num">Bookings</th>
+                    <th class="num">Rentals</th>
+                    <th class="num">Expenses</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cards" id="analysisCards" style="margin-top: 20px"></div>
+
+          <div class="table-wrap">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 3v18h18" />
+                    <rect x="7" y="12" width="3" height="6" />
+                    <rect x="12" y="8" width="3" height="10" />
+                    <rect x="17" y="14" width="3" height="4" /></svg></span
+                >Month-by-month breakdown
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="analysisMonthTable">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th class="num">Rentals</th>
+                    <th class="num">Revenue</th>
+                    <th class="num">Collected</th>
+                    <th class="num">Expenses</th>
+                    <th class="num">Net</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-head"><h3>Revenue by month</h3></div>
+            <div style="padding: 16px" id="analysisBars"></div>
+          </div>
+
+          <!-- ---------- statistical analysis ----------
+           A general-purpose stats tool over the CURRENTLY OPEN file's own records —
+           separate from the multi-month file loader above, so it works even with
+           nothing loaded there. Pick any metric (fuel is the flagship example, but
+           it covers every expense category plus revenue/duration/payments too) and
+           get count/total/average/median/min/max/spread, a per-vehicle breakdown,
+           and a month-by-month trend — recalculated live as data changes. -->
+          <div class="table-wrap" style="margin-top: 20px">
+            <div class="table-head">
+              <h3>
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 3v18h18" />
+                    <path d="M7 15l3-4 3 2 4-6" /></svg></span
+                >Statistical analysis
+              </h3>
+            </div>
+            <div style="padding: 14px 16px">
+              <p class="hint" style="margin: 0 0 12px">
+                Pick what to analyze — fuel spend, another expense category,
+                rental revenue, rental duration, or payments — and see the
+                numbers behind it: count, total, average, median, spread, plus a
+                per-vehicle and month-by-month breakdown. This reads the file
+                currently open, not the loaded-months list above.
+              </p>
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  flex-wrap: wrap;
+                  align-items: center;
+                  margin-bottom: 14px;
+                "
+              >
+                <label style="margin: 0"
+                  >Metric
+                  <select
+                    id="statMetricSelect"
+                    style="margin-top: 4px"
+                  ></select>
+                </label>
+              </div>
+              <div class="cards" id="statCards"></div>
+              <div
+                class="table-wrap"
+                style="
+                  margin-top: 16px;
+                  box-shadow: none;
+                  border: 1px solid var(--line);
+                "
+              >
+                <div class="table-head"><h3>Per vehicle</h3></div>
+                <div class="table-scroll">
+                  <table id="statVehicleTable">
+                    <thead>
+                      <tr>
+                        <th>Vehicle</th>
+                        <th class="num">Count</th>
+                        <th class="num">Total</th>
+                        <th class="num">Average</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+              <div
+                class="table-wrap"
+                style="
+                  margin-top: 16px;
+                  box-shadow: none;
+                  border: 1px solid var(--line);
+                "
+              >
+                <div class="table-head"><h3>By month</h3></div>
+                <div style="padding: 16px" id="statMonthBars"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="print-footer">
+      Mbadavi Investment Limited &nbsp;·&nbsp; @jiranisystem
+    </div>
+
+    <div class="modal-overlay" id="expModalOverlay">
+      <div class="modal-box">
+        <div class="modal-head">
+          <div>
+            <h2>Expense statement</h2>
+            <p>
+              Cumulative and per-vehicle breakdown, by category — fuel, garage,
+              driver allowance, owner payout, leased cars and everything else.
+            </p>
+          </div>
+          <button class="modal-close" id="expModalClose">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="period-bar">
+            <div class="seg" id="expPeriodSeg">
+              <button data-p="daily">Daily</button>
+              <button data-p="weekly">Weekly</button>
+              <button data-p="monthly" class="active">Monthly</button>
+              <button data-p="yearly">Yearly</button>
+              <button data-p="custom">Custom</button>
+            </div>
+            <input type="date" id="exp_ref" title="Reference date" />
+            <span id="expCustomRange" style="display: none">
+              <input type="date" id="exp_start" title="Start date" />
+              <input type="date" id="exp_end" title="End date" />
+            </span>
+            <select
+              id="exp_vehicle_pick"
+              style="
+                padding: 8px 10px;
+                background: var(--panel-2);
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                color: var(--ink);
+                font-size: 13px;
+                font-family: var(--sans);
+                min-width: 200px;
+              "
+            >
+              <option value="">All vehicles (fleet-wide)</option>
+            </select>
+            <button
+              class="btn"
+              style="width: auto; padding: 8px 14px; margin: 0"
+              id="btnPrintExpense"
+            >
+              🖨 Print
+            </button>
+          </div>
+          <div class="hint" id="expPeriodLabel"></div>
+
+          <div class="cards" id="expTotalCards"></div>
+
+          <div class="table-wrap">
+            <div class="table-head">
+              <h3 id="expCatHeading">
+                <span class="th-icon"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M20.6 12.6 12.7 20.5a2 2 0 0 1-2.8 0l-7-7a2 2 0 0 1 0-2.8L10.8 2.8 20.6 3z"
+                    />
+                    <circle cx="16.5" cy="7.5" r="1.5" /></svg></span
+                >Expense by category
+              </h3>
+            </div>
+            <div class="table-scroll">
+              <table id="expCatTable">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th class="num">Count</th>
+                    <th class="num">Amount</th>
+                    <th class="num">% of total</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap" id="expDetailWrap" style="display: none">
+            <div class="table-head">
+              <h3 id="expDetailHeading">Transactions</h3>
+              <button class="row-action" id="btnExpDetailBack">
+                ← Back to categories
+              </button>
+            </div>
+            <div class="table-scroll">
+              <table id="expDetailTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Vehicle</th>
+                    <th>Description</th>
+                    <th class="num">Qty</th>
+                    <th class="num">Amount</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap" id="fuelRecoveryWrap">
+            <div class="table-head">
+              <h3>
+                ⛽ Fuel fronted for clients — office spend vs. amount charged
+              </h3>
+            </div>
+            <div
+              class="cards"
+              id="fuelRecoveryCards"
+              style="padding: 14px 16px 0; margin-bottom: 0"
+            ></div>
+            <div class="table-scroll">
+              <table id="fuelRecoveryTable">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th class="num">Transactions</th>
+                    <th class="num">Office cost</th>
+                    <th class="num">Charged to client</th>
+                    <th class="num">Net to office</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div
+              style="
+                padding: 2px 16px 6px;
+                font-size: 11px;
+                color: var(--ink-faint);
+              "
+            >
+              By source
+            </div>
+            <div class="table-scroll">
+              <table id="fuelSourceTable">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th class="num">Transactions</th>
+                    <th class="num">Office cost</th>
+                    <th class="num">Charged to client</th>
+                    <th class="num">Net to office</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

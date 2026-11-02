@@ -1,0 +1,97 @@
+/* Notifications: stacked bottom-right. Solid fills so errors and successes are
+   unmistakable on both the light theme and the dark modal overlays. */
+:root {
+  --toast-error: #cf3f1a;
+  --toast-error-edge: #a52f10;
+  --toast-success: #1d7f45;
+  --toast-success-edge: #135c31;
+  --toast-info: #22303d;
+  --toast-info-edge: #121b24;
+}
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10050; /* above modals and the in-app dialog (10000) */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 12px 12px 14px;
+  border-radius: 10px;
+  border-left: 5px solid var(--toast-info-edge);
+  background: var(--toast-info);
+  color: #fff;
+  font-size: 13.5px;
+  line-height: 1.45;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.toast-item.show {
+  opacity: 1;
+  transform: none;
+}
+.toast-item.toast-error {
+  background: var(--toast-error);
+  border-left-color: var(--toast-error-edge);
+  font-weight: 600;
+}
+.toast-item.toast-success {
+  background: var(--toast-success);
+  border-left-color: var(--toast-success-edge);
+}
+.toast-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+  font-weight: 800;
+}
+.toast-text {
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+  overflow-wrap: anywhere;
+}
+.toast-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: -2px -2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  line-height: 24px;
+  opacity: 0.8;
+  cursor: pointer;
+}
+.toast-close:hover,
+.toast-close:focus-visible {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+}
+@media (max-width: 600px) {
+  .toast {
+    right: 16px;
+    bottom: 16px;
+  }
+}

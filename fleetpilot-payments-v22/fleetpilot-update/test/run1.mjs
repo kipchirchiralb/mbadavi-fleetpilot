@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import { analyze } from '../src/importer/index.js';
+const W = JSON.parse(fs.readFileSync('workbook.json','utf8'));
+const t0 = Date.now();
+const res = analyze(W, { today: '2026-10-24' });
+console.log('ok', res.ok, res.error||'', 'ms', Date.now()-t0);
+console.log(res.stats);
+const by = {}; res.review.forEach(r => { const k = r.severity+' | '+r.problem; by[k] = (by[k]||0)+1; });
+console.log(by);
+console.log('skipped', res.skipped); console.log('notes', res.notes.map(n=>n.text));
+const bad = res.checks.filter(c=>!c.ok); console.log('checks', res.checks.length, 'off', bad.length);
+const g = {}; bad.forEach(c=>{ g[c.group]=(g[c.group]||0)+1;}); console.log(g);
+fs.writeFileSync('out1.json', JSON.stringify(res));

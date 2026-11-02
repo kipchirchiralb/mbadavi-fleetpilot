@@ -1,0 +1,65 @@
+:root {
+  --bg: #0b0e12;
+  --panel: #12161c;
+  --panel-2: #191f27;
+  --line: #28313c;
+  --ink: #f1f3f5;
+  --ink-dim: #949daa;
+  --ink-faint: #626c79;
+  --amber: #d6a84f;
+  --amber-dim: #765e2b;
+  --green: #35b86b;
+  --red: #e05a52;
+  --fuel: #e58a3a;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --sans:
+    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at 72% -10%,
+      rgba(214, 168, 79, 0.1),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 100% 60%,
+      rgba(46, 155, 230, 0.045),
+      transparent 28%
+    ),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  overflow: hidden;
+  letter-spacing: -0.005em;
+}
+body:before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.012),
+    transparent 22%,
+    rgba(0, 0, 0, 0.08)
+  );
+  z-index: 0;
+}
+.app {
+  position: relative;
+  z-index: 1;
+}
+.app {
+  display: flex;
+  height: 100vh;
+}

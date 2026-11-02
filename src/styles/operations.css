@@ -1,0 +1,159 @@
+/* Jurisdiction-specific navigation icons */
+.nav button .dot svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav button[data-panel="dashboard"] .dot svg {
+  fill: currentColor;
+  stroke: none;
+  width: 15px;
+  height: 15px;
+}
+.nav button[data-panel="vehicles"] .dot svg {
+  width: 17px;
+  height: 17px;
+}
+.nav button[data-panel="payments"] .dot svg {
+  stroke-width: 1.7;
+}
+.nav button[data-panel="reports"] .dot svg,
+.nav button[data-panel="analysis"] .dot svg {
+  stroke-width: 1.9;
+}
+.nav button .dot {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+.nav button:hover .dot {
+  transform: scale(1.05);
+}
+.nav button.active .dot {
+  transform: scale(1.04);
+}
+
+/* ---------- professional dashboard privacy / daily operations ---------- */
+.dash-sensitive {
+  filter: blur(7px);
+  transition: filter 0.18s ease;
+  user-select: none;
+}
+.dash-privacy-revealed .dash-sensitive {
+  filter: none;
+  user-select: auto;
+}
+.dash-privacy-btn {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--ink-dim);
+  border-radius: 7px;
+  padding: 4px 7px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dash-privacy-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink-faint);
+}
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.alert-btn {
+  position: relative;
+}
+.alert-count {
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  margin-left: 5px;
+}
+.daily-modal-box {
+  max-width: 1000px;
+  width: 94vw;
+}
+.daily-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.daily-kpi {
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.daily-kpi .k-label {
+  font-size: 11px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.daily-kpi .k-value {
+  font-size: 17px;
+  font-weight: 800;
+  margin-top: 5px;
+}
+.alert-item {
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel-2);
+  margin-bottom: 8px;
+}
+.alert-item strong {
+  display: block;
+  margin-bottom: 3px;
+}
+.alert-item small {
+  color: var(--ink-dim);
+}
+.alert-item.alert-clickable {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.alert-item.alert-clickable:hover {
+  transform: translateY(-1px);
+  border-color: var(--amber);
+  background: rgba(214, 168, 79, 0.08);
+}
+.alert-item .alert-go {
+  display: block;
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--amber);
+  font-family: var(--mono);
+}
+.status-paid {
+  color: var(--green);
+  font-weight: 700;
+}
+.status-partial {
+  color: var(--amber);
+  font-weight: 700;
+}
+.status-unpaid {
+  color: var(--red);
+  font-weight: 700;
+}

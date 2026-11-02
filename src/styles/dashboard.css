@@ -1,0 +1,214 @@
+/* ---------- dashboard: modernized section layout ---------- */
+.dash-section {
+  margin-bottom: 30px;
+}
+.dash-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.dash-section-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.dash-section-title .th-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(214, 168, 79, 0.1);
+  border: 1px solid rgba(214, 168, 79, 0.24);
+  color: var(--amber);
+  flex-shrink: 0;
+}
+.dash-section-title .th-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.dash-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dash-status-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-dim);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 13px;
+}
+.dash-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.dash-grid-2 .table-wrap {
+  margin-bottom: 0;
+}
+@media (max-width: 900px) {
+  .dash-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  #dashCards {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  #dashCards .card.size-sm {
+    grid-column: span 3;
+  }
+  #dashCards .card.size-md {
+    grid-column: span 3;
+  }
+  #dashCards .card.size-lg {
+    grid-column: span 6;
+  }
+}
+.table-wrap .table-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.table-wrap .table-head h3 {
+  margin: 0;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.th-icon {
+  display: inline-flex;
+  color: var(--amber);
+  flex-shrink: 0;
+}
+.th-icon svg {
+  width: 15px;
+  height: 15px;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.empty-row td {
+  color: var(--ink-faint);
+  text-align: center;
+  padding: 22px;
+  font-style: italic;
+}
+.tag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.tag.Available,
+.tag.Completed,
+.tag.Active,
+.tag.Confirmed,
+.tag.Checked-in {
+  color: var(--green);
+  border-color: #2c4a38;
+}
+.tag.Rented,
+.tag.Pending {
+  color: var(--amber);
+  border-color: var(--amber-dim);
+}
+.tag.Maintenance,
+.tag.Cancelled,
+.tag.Inactive {
+  color: var(--red);
+  border-color: #5a2e2a;
+}
+.row-del {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-size: 13px;
+}
+.row-del:hover {
+  color: var(--red);
+}
+.row-action {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  margin-right: 8px;
+  font-family: var(--sans);
+}
+.row-action:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+.row-edit {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  margin-right: 8px;
+  font-family: var(--sans);
+}
+.row-edit:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.row-cancel {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  margin-right: 8px;
+  font-family: var(--sans);
+}
+.row-cancel:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+.print-footer {
+  display: none;
+}
+@media print {
+  .sidebar {
+    display: none !important;
+  }
+  .main {
+    max-width: 100%;
+    padding: 10px 0;
+  }
+  .print-footer {
+    display: block;
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 14px;
+    border-top: 1px solid #999;
+    font-size: 12px;
+    color: #333;
+  }
+}

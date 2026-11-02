@@ -1,0 +1,147 @@
+/* ---------- Intro splash (6s) ---------- */
+#introSplash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  animation: introFadeOut 0.48s ease forwards;
+  animation-delay: 5.52s;
+}
+#introSplash .intro-logo {
+  width: 190px;
+  height: auto;
+  display: block;
+  margin: 0 0 -14px;
+  object-fit: contain;
+  opacity: 0;
+  transform: scale(0.82);
+  animation: introLogoPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0.06s;
+  filter: drop-shadow(0 0 26px rgba(214, 168, 79, 0.35));
+}
+#introSplash .intro-words {
+  display: flex;
+  gap: 0.45em;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 20px;
+}
+#introSplash .intro-words span {
+  opacity: 0;
+  transform: translateY(10px);
+  display: inline-block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: clamp(20px, 4.4vw, 34px);
+  background: linear-gradient(
+    180deg,
+    #fff6d8 0%,
+    #f3cf6a 22%,
+    #caa23a 52%,
+    #f5d67a 76%,
+    #b8862b 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: introWordIn 0.45s ease forwards;
+}
+#introSplash .intro-words span:nth-child(1) {
+  animation-delay: 2.4s;
+}
+#introSplash .intro-words span:nth-child(2) {
+  animation-delay: 2.78s;
+}
+#introSplash .intro-words span:nth-child(3) {
+  animation-delay: 3.17s;
+}
+#introSplash .intro-motto {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  margin-top: 8px;
+  animation: introFadeIn 0.66s ease forwards;
+  animation-delay: 4.02s;
+}
+#introSplash .intro-motto .intro-line {
+  width: 56px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--amber));
+}
+#introSplash .intro-motto .intro-line.right {
+  background: linear-gradient(90deg, var(--amber), transparent);
+}
+#introSplash .intro-motto span {
+  font-family: var(--sans);
+  font-size: clamp(13px, 2.4vw, 17px);
+  color: #fff;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+@keyframes introLogoPop {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes introWordIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes introFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes introFadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+.panel-header,
+.section-head,
+.page-header,
+.dashboard-head {
+  position: sticky;
+  top: -1px;
+  z-index: 20;
+  background: linear-gradient(
+    180deg,
+    rgba(11, 14, 18, 0.98) 0%,
+    rgba(11, 14, 18, 0.94) 78%,
+    rgba(11, 14, 18, 0) 100%
+  );
+  padding-top: 2px;
+  padding-bottom: 14px;
+  backdrop-filter: blur(12px);
+}
+.panel-header:after,
+.section-head:after,
+.page-header:after,
+.dashboard-head:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(240, 180, 79, 0.18),
+    transparent 70%
+  );
+}
+.filebox {
+  scrollbar-width: thin;
+}
