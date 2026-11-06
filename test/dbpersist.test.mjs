@@ -2,6 +2,8 @@
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import { createRequire } from 'node:module';
 import { startDatabase, DesktopDb, lowDisk } from '../src/dbPersist.js'; import { todayData } from '../src/today.js';
 const { createStore } = createRequire(import.meta.url)('../electron/ledgerFile.cjs');
+const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite');
+const fmtOf = file => { const d = new DatabaseSync(file, { readOnly: true }); try{ return Number(d.prepare("SELECT value FROM meta WHERE key = 'formatVersion'").get().value); }finally{ d.close(); } };
 let fails = 0; const ok = (n, c) => { console.log((c ? 'PASS ' : 'FAIL ') + n); if(!c) fails++; };
 const led = (n, x) => Object.assign({ vehicles: Array.from({ length: n }, (_, i) => ({ id: i + 1, reg: 'K' + i })), rentals: [], nextId: n + 1, settings: {} }, x);
 const bridgeOf = store => ({ dbSettings: async () => ({ ok: true, settings: store.getSettings(), databases: store.list(), folder: store.root }), dbSetSettings: async p => ({ ok: true, settings: store.setSettings(p) }),
@@ -29,15 +31,15 @@ st = await startDatabase({ bridge: b, readBrowser: async () => null, confirmFn: 
 store.setSettings({ startWith: 'last' });
 
 /* a newer file: blocked, never written */
-const f = path.join(root, 'databases', 'Second.fpdb.json'), o = JSON.parse(fs.readFileSync(f, 'utf8')); o.formatVersion = 99; fs.writeFileSync(f, JSON.stringify(o));
+store.closeAll(); const f = path.join(root, 'databases', 'Second.db'); { const d = new DatabaseSync(f); d.exec("UPDATE meta SET value = '99' WHERE key = 'formatVersion'"); d.close(); }
 store = createStore({ root }); b = bridgeOf(store); store.setSettings({ lastUsed: 'Second' });
 st = await startDatabase({ bridge: b, readBrowser: async () => null, confirmFn: yes });
 ok('a newer file: start-up stops with a plain message', st.blocked && /newer version/.test(st.blocked.message));
-const dn = new DesktopDb(b, 'Second'); dn.blocked = st.blocked.message; ok('and saving to it is refused', (await dn.save(led(1))).locked === true && JSON.parse(fs.readFileSync(f, 'utf8')).formatVersion === 99);
+const dn = new DesktopDb(b, 'Second'); dn.blocked = st.blocked.message; ok('and saving to it is refused', (await dn.save(led(1))).locked === true && fmtOf(f) === 99);
 
 /* a damaged file: the monthly copy is offered */
 store = createStore({ root, now: () => new Date('2026-11-02T09:00:00') }); b = bridgeOf(store); const dm = new DesktopDb(b, 'Main'); await dm.save(led(9, { x: 1 })); await dm.save(led(10));
-fs.writeFileSync(path.join(root, 'databases', 'Main.fpdb.json'), '{broken'); store.setSettings({ lastUsed: 'Main' });
+store.closeAll(); fs.writeFileSync(path.join(root, 'databases', 'Main.db'), 'broken, not a database file at all'); store.setSettings({ lastUsed: 'Main' });
 st = await startDatabase({ bridge: b, readBrowser: async () => null, confirmFn: yes });
 ok('damaged file: the newest monthly copy is loaded and the damaged one set aside', st.source === 'copy' && st.data.vehicles.length === 9 && fs.readdirSync(path.join(root, 'damaged')).length === 1);
 

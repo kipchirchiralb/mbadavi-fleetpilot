@@ -1,5 +1,6 @@
 /* Admin "Pilot" area (behind the PIN): Overview (was Sheet1), Loans, Insurance, Chama, OCHWADA statement.
    Everything is drawn live from the database; nothing here is typed twice. */
+import { newestFirst, newestFirstByMonth } from './order.js';
 import { monthlySummary, SUMMARY_COLUMNS } from './summary.js';
 import { statement } from './statement.js';
 import { pagesHtml, pagesClick, pagesChange, drillHtml, fig, PAGE_LIST } from './pages.js';
@@ -94,7 +95,7 @@ export function initPilot(ctx){
 
   function insurance(){
     const d = db(); const veh = id => (d.vehicles.find(v => v.id == id) || {}).reg || '—';
-    const list = [...d.insurance].sort((a, b) => (b.paidDate || '') < (a.paidDate || '') ? -1 : 1), today = new Date().toISOString().slice(0, 10);
+    const list = newestFirst(d.insurance), today = new Date().toISOString().slice(0, 10);
     const total = list.reduce((s, i) => s + num(i.amount), 0), expired = list.filter(i => i.expiryDate && i.expiryDate < today).length;
     const byCar = {}, byMonth = {}, carId = {};
     list.forEach(i => { const r = veh(i.vehicleId); if(i.vehicleId) carId[r] = i.vehicleId; (byCar[r] = byCar[r] || { n: 0, t: 0 }); byCar[r].n++; byCar[r].t += num(i.amount);

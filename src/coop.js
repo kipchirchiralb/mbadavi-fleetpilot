@@ -4,6 +4,7 @@
    - A new line starts as "to complete": press ↗ and Rentals opens with what you typed filled in; pick the car, save, and the line is linked.
    - A rental made in Rentals with client type Coop gets its Coop line by itself (or joins the one you typed), so the two tables always agree.
    - Editing a linked line also updates its rental (dates, days, amount, contract, fuel, allowance, name), and the other way round. */
+import { newestFirst, newestFirstByMonth } from './order.js';
 import { gridHtml, bindGrid } from './gridEdit.js';
 import { monthName } from './loans.js';
 import { rentalFuel, rentalDriver, fuelIndex } from './fuelCore.js';
@@ -132,8 +133,9 @@ export function initCoop(ctx){
     ['allowance', 'Allowance', 'number'], ['fuel', 'Fuel', 'number'], ['contract', 'Cont no', 'text'], ['department', 'Department', 'text'], ['kmOut', 'KM out', 'number'], ['kmIn', 'KM in', 'number']];
   const visible = () => {
     const d = db(), q = st.q.trim().toLowerCase();
-    return (d.coops || []).filter(c => (st.month === 'all' || String(c.start || '').slice(0, 7) === st.month) && (!st.status || coopStatus(c) === st.status) &&
-      (!q || [c.name, c.contract, c.department].some(x => String(x || '').toLowerCase().includes(q)))).sort((a, b) => (a.start || '') < (b.start || '') ? -1 : 1);
+    const list = (d.coops || []).filter(c => (st.month === 'all' || String(c.start || '').slice(0, 7) === st.month) && (!st.status || coopStatus(c) === st.status) &&
+      (!q || [c.name, c.contract, c.department].some(x => String(x || '').toLowerCase().includes(q))));
+    return newestFirstByMonth(list, c => String(c.start || '').slice(0, 7));
   };
 
   function render(){

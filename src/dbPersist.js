@@ -1,4 +1,4 @@
-/* The page's side of the database file (inside the FleetPilot .exe). The file work itself is done by desktop/ledgerFile.cjs.
+/* The page's side of the database (inside the FleetPilot .exe). The SQLite work itself is done by electron/ledgerFile.cjs.
    Outside the .exe (plain browser / PWA) there is no bridge: hasDesktopDb() is false and the app keeps using the browser storage as before.
 
    START-UP  startDatabase(): opens the database chosen in Pilot (default: the last one used) BEFORE anything is shown.
@@ -32,6 +32,7 @@ export async function startDatabase({ bridge, readBrowser, confirmFn, openOnce }
     out.name = name;
     r = await bridge.dbLoad(name);
     if(r && r.ok){ out.data = r.data; out.source = 'file'; out.name = r.name;
+      if(r.movedFrom) out.notices.push({ level: 'info', kind: 'tosqlite', text: 'Your database "' + r.name + '" now lives in SQLite (databases\\' + r.name + '.db). The old file was kept, unchanged, in the old-files folder. Nothing was lost.' });
       if(r.upgradedFrom != null) out.notices.push({ level: 'info', kind: 'upgraded', text: 'Your database was brought up to this version of FleetPilot (file format ' + r.upgradedFrom + ' to ' + r.formatVersion + '). The old file was kept once in the copies folder. Nothing was lost.' });
       return out; }
     if(r && (r.reason === 'newer' || r.reason === 'unreadable' || r.reason === 'upgrade-failed')){

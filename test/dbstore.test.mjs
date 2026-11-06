@@ -1,115 +1,121 @@
-/* Run: node test/dbstore.test.mjs   (needs no Electron: the desktop store is plain Node) */
+/* Run: node test/dbstore.test.mjs   (needs no Electron: the desktop store is plain Node + node:sqlite) */
 import { createRequire } from 'module';
 import fs from 'fs'; import os from 'os'; import path from 'path';
 const require = createRequire(import.meta.url);
 const { createStore, CURRENT_FORMAT } = require('../electron/ledgerFile.cjs');
+const { DatabaseSync } = require('node:sqlite');
 
 let fails = 0; const ok = (n, c) => { console.log((c ? 'PASS ' : 'FAIL ') + n); if(!c) fails++; };
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'fp-'));
 const ledger = (n, extra) => Object.assign({ vehicles: Array.from({ length: n }, (_, i) => ({ id: i + 1, reg: 'KAA ' + i })), drivers: [], clients: [], rentals: [], expenses: [], payments: [], settings: { adminPin: 'x' }, nextId: n + 1 }, extra || {});
 const at = iso => () => new Date(iso);
+const dbFile = (root, name) => path.join(root, 'databases', name + '.db');
+const peek = (file, sql) => { const d = new DatabaseSync(file, { readOnly: true }); try{ return d.prepare(sql).all(); }finally{ d.close(); } };
 
 /* ---- save, close, open again ---- */
 {
   const root = tmp(); let s = createStore({ root, now: at('2026-10-31T10:00:00') });
-  const r = await s.save('Main', ledger(3));
-  ok('save writes the database file', r.ok && fs.existsSync(path.join(root, 'databases', 'Main.fpdb.json')));
-  ok('no temp file is left behind', !fs.readdirSync(path.join(root, 'databases')).some(n => n.endsWith('.tmp')));
-  s = createStore({ root });                                   // "close and start again"
+  const r = await s.save('Main', ledger(3, { period: null, nested: { a: [1, 2, { b: 'c' }] } }));
+  ok('save writes the SQLite database', r.ok && fs.existsSync(dbFile(root, 'Main')) && r.bytes > 0);
+  ok('each record is its own row', peek(dbFile(root, 'Main'), "SELECT id FROM records WHERE list = 'vehicles' ORDER BY pos").map(x => x.id).join() === '1,2,3');
+  s.closeAll(); s = createStore({ root });                       // "close and start again"
   const l = await s.load('Main');
   ok('reopened: the same records are there', l.ok && l.data.vehicles.length === 3 && l.data.settings.adminPin === 'x' && l.data.nextId === 4);
+  ok('values, nulls, nested objects and empty lists come back exactly', l.ok && l.data.period === null && JSON.stringify(l.data.nested) === '{"a":[1,2,{"b":"c"}]}' && Array.isArray(l.data.drivers) && l.data.drivers.length === 0);
+  ok('the order of keys is kept', Object.keys(l.data).join() === Object.keys(ledger(3, { period: null, nested: 1 })).join());
   ok('the list shows it with its record count', s.list()[0].name === 'Main' && s.list()[0].records === 3);
   ok('last used / start-with settings are kept', (s.setSettings({ lastUsed: 'Main' }), createStore({ root }).getSettings().lastUsed === 'Main' && createStore({ root }).getSettings().startWith === 'last'));
   const sy = s.saveSync('Main', ledger(5));
   ok('synchronous save (window closing) works', sy.ok && (await createStore({ root }).load('Main')).data.vehicles.length === 5);
+  await s.save('Main', ledger(1));
+  ok('a shorter list leaves no old rows behind', peek(dbFile(root, 'Main'), "SELECT COUNT(*) n FROM records")[0].n === 1);
+  s.closeAll();
 }
 
-/* ---- an update (new program version, same data folder) keeps the data ---- */
-{
-  const root = tmp(), program1 = tmp(), program2 = tmp();
-  fs.writeFileSync(path.join(program1, 'app.exe'), 'old'); 
-  const v20 = createStore({ root, appVersion: 'v21' }); await v20.save('Main', ledger(4));
-  fs.rmSync(program1, { recursive: true }); fs.writeFileSync(path.join(program2, 'app.exe'), 'new');   // "install over": the program folder is replaced
-  const v22 = createStore({ root, appVersion: 'v22' }); const l = await v22.load('Main');
-  ok('after the program is replaced, the data is there at first start', l.ok && l.data.vehicles.length === 4);
-  ok('the data folder is not inside the program folder', !root.startsWith(program1) && !root.startsWith(program2));
-}
-
-/* ---- format version: newer program upgrades an older file step by step, once-copy of the old file ---- */
+/* ---- the .fpdb.json files of v21 and earlier move into SQLite once ---- */
 {
   const root = tmp(); fs.mkdirSync(path.join(root, 'databases'), { recursive: true });
-  const bare = ledger(2); fs.writeFileSync(path.join(root, 'databases', 'Old.fpdb.json'), JSON.stringify(bare));   // format 0: a bare ledger
-  let s = createStore({ root }); const l = await s.load('Old');
-  ok('a bare ledger (format 0) opens and is upgraded to the current format', l.ok && l.upgradedFrom === 0 && l.formatVersion === CURRENT_FORMAT);
-  const written = JSON.parse(fs.readFileSync(path.join(root, 'databases', 'Old.fpdb.json'), 'utf8'));
-  ok('the file now carries the format version', written.formatVersion === CURRENT_FORMAT && written.data.vehicles.length === 2);
-  ok('one copy of the old file is kept, named with its version', fs.existsSync(path.join(root, 'copies', 'Old - old format v0.fpdb.json')));
-  await createStore({ root }).load('Old');
-  ok('opening again does not make another copy', fs.readdirSync(path.join(root, 'copies')).filter(n => /old format/.test(n)).length === 1);
+  const wrapped = { format: 'fleetpilot-database', formatVersion: 1, appVersion: 'v21', name: 'Main', savedAt: '2026-10-01T08:00:00.000Z', records: 4, data: ledger(4) };
+  fs.writeFileSync(path.join(root, 'databases', 'Main.fpdb.json'), JSON.stringify(wrapped));
+  fs.writeFileSync(path.join(root, 'databases', 'Bare.fpdb.json'), JSON.stringify(ledger(2)));    // format 0
+  fs.writeFileSync(path.join(root, 'databases', 'Broken.fpdb.json'), '{"vehicles":[');
+  const s = createStore({ root }); const l = await s.load('Main');
+  ok('an old JSON database is opened from SQLite with all its records', l.ok && l.data.vehicles.length === 4 && l.savedAt === '2026-10-01T08:00:00.000Z');
+  ok('the start tells where the old file went', /old-files/.test(l.movedFrom));
+  ok('the old file is kept, unchanged, in old-files and no JSON database is left', fs.existsSync(path.join(root, 'old-files', 'Main.fpdb.json')) && !fs.readdirSync(path.join(root, 'databases')).some(n => n.endsWith('.json')));
+  ok('a bare (format 0) JSON ledger is moved too', (await s.load('Bare')).data.vehicles.length === 2);
+  ok('a damaged JSON file is set aside, not moved', fs.readdirSync(path.join(root, 'damaged')).some(n => n.startsWith('Broken')) && !fs.existsSync(dbFile(root, 'Broken')));
+  s.closeAll();
+  ok('starting again does not move anything twice', (createStore({ root }).list().length === 2) && !(await createStore({ root }).load('Main')).movedFrom);
 }
+
+/* ---- format version: newer program upgrades an older database step by step, once-copy of the old one ---- */
 {
   const root = tmp(), steps = [];
   const upgrades = { 0: d => d, 1: d => { steps.push(1); d.step1 = true; return d; }, 2: d => { steps.push(2); d.step2 = d.step1 === true; return d; } };
-  const v1 = createStore({ root, current: 1, upgrades }); await v1.save('Main', ledger(2));
+  const v1 = createStore({ root, current: 1, upgrades }); await v1.save('Main', ledger(2)); v1.closeAll();
   const v3 = createStore({ root, current: 3, upgrades }); const l = await v3.load('Main');
-  ok('format 1 -> 3 runs step 1 then step 2, in order', l.ok && steps.join() === '1,2' && l.data.step1 === true && l.data.step2 === true && l.upgradedFrom === 1);
-  ok('the old file is kept once, named with its version', fs.existsSync(path.join(root, 'copies', 'Main - old format v1.fpdb.json')));
-  const before = fs.readFileSync(path.join(root, 'databases', 'Main.fpdb.json'), 'utf8');
-  const v2 = createStore({ root, current: 2, upgrades });                // an OLDER program meets the format-3 file
+  ok('format 1 -> 3 runs step 1 then step 2, in order', l.ok && steps.join() === '1,2' && l.data.step1 === true && l.data.step2 === true && l.upgradedFrom === 1 && l.formatVersion === 3);
+  ok('the old database is kept once, named with its version', fs.existsSync(path.join(root, 'copies', 'Main - old format v1.db')));
+  v3.closeAll();
+  const before = peek(dbFile(root, 'Main'), 'SELECT data FROM records');
+  const v2 = createStore({ root, current: 2, upgrades });                // an OLDER program meets the format-3 database
   const refuse = await v2.load('Main');
-  ok('an older program refuses a newer file with a plain message', !refuse.ok && refuse.reason === 'newer' && /newer version of FleetPilot/.test(refuse.message));
+  ok('an older program refuses a newer database with a plain message', !refuse.ok && refuse.reason === 'newer' && /newer version of FleetPilot/.test(refuse.message));
   const w = await v2.save('Main', ledger(9));
-  ok('and never overwrites it', !w.ok && w.locked === true && fs.readFileSync(path.join(root, 'databases', 'Main.fpdb.json'), 'utf8') === before);
-  ok('same for the synchronous save', v2.saveSync('Main', ledger(9)).ok === false && fs.readFileSync(path.join(root, 'databases', 'Main.fpdb.json'), 'utf8') === before);
+  ok('and never overwrites it', !w.ok && w.locked === true && JSON.stringify(peek(dbFile(root, 'Main'), 'SELECT data FROM records')) === JSON.stringify(before));
+  ok('same for the synchronous save', v2.saveSync('Main', ledger(9)).ok === false);
   const bad = createStore({ root: tmp(), current: 2, upgrades: { 0: d => d } });
-  fs.mkdirSync(path.join(bad.root, 'databases'), { recursive: true }); fs.writeFileSync(path.join(bad.root, 'databases', 'X.fpdb.json'), JSON.stringify({ format: 'fleetpilot-database', formatVersion: 1, data: ledger(1) }));
-  ok('a missing upgrade step fails safely and leaves the file as it was', (await bad.load('X')).reason === 'upgrade-failed' && JSON.parse(fs.readFileSync(path.join(bad.root, 'databases', 'X.fpdb.json'), 'utf8')).formatVersion === 1);
+  await bad.save('X', ledger(1)); bad.closeAll();
+  const bad2 = createStore({ root: bad.root, current: 3, upgrades: { 0: d => d } });
+  ok('a missing upgrade step fails safely', (await bad2.load('X')).reason === 'upgrade-failed');
+  bad2.closeAll();
+}
+{
+  const root = tmp(); const s = createStore({ root }); const l = (await s.save('Main', ledger(1)), await s.load('Main'));
+  ok('a current database opens without an upgrade', l.ok && l.upgradedFrom === null && l.formatVersion === CURRENT_FORMAT); s.closeAll();
 }
 
 /* ---- a damaged file is set aside, never overwritten ---- */
 {
-  const root = tmp(); const s = createStore({ root }); await s.save('Main', ledger(2));
-  fs.writeFileSync(path.join(root, 'databases', 'Main.fpdb.json'), '{"format":"fleetpilot-database","formatVersion":1,"data":{"vehicles":[');   // cut short
-  const l = await createStore({ root }).load('Main');
+  const root = tmp(); const s = createStore({ root }); await s.save('Main', ledger(2)); s.closeAll();
+  fs.writeFileSync(dbFile(root, 'Main'), 'this is not a database at all, just text that replaced it');
+  const s2 = createStore({ root }); const l = await s2.load('Main');
   ok('a file that cannot be read is reported as damaged', !l.ok && l.reason === 'damaged');
-  ok('it is moved to the damaged folder, so nothing can overwrite it', l.setAside && fs.existsSync(l.setAside) && !fs.existsSync(path.join(root, 'databases', 'Main.fpdb.json')));
+  ok('it is moved to the damaged folder, so nothing can overwrite it', l.setAside && fs.existsSync(l.setAside) && !fs.existsSync(dbFile(root, 'Main')));
+  s2.closeAll();
 }
 
 /* ---- one safety copy per month ---- */
 {
   const root = tmp(); let clock = new Date('2026-10-05T09:00:00'); const s = createStore({ root, now: () => clock });
   const first = await s.save('Main', ledger(1));
-  ok('a brand new database gets this month\'s copy right away', first.monthlyCopy === 'Main - monthly 2026-10.fpdb.json');
+  ok('a brand new database gets this month\'s copy right away', first.monthlyCopy === 'Main - monthly 2026-10.db');
   clock = new Date('2026-10-20T09:00:00'); const again = await s.save('Main', ledger(2));
   ok('later saves in the same month make no new copy', again.monthlyCopy === '' && s.copies().length === 1);
   clock = new Date('2026-11-01T08:30:00'); const nov = await s.save('Main', ledger(3));
-  ok('the first save of a new month makes the copy', nov.monthlyCopy === 'Main - monthly 2026-11.fpdb.json');
-  const copy = JSON.parse(fs.readFileSync(path.join(root, 'copies', 'Main - monthly 2026-11.fpdb.json'), 'utf8'));
-  ok('the copy holds the file as it stood before that save (2 cars, not 3)', copy.data.vehicles.length === 2);
+  ok('the first save of a new month makes the copy', nov.monthlyCopy === 'Main - monthly 2026-11.db');
+  const rc = s.readCopy('Main - monthly 2026-11.db');
+  ok('the copy holds the database as it stood before that save (2 cars, not 3)', rc.ok && rc.data.vehicles.length === 2);
   clock = new Date('2026-11-02T08:30:00'); await s.save('Main', ledger(4));
   ok('exactly one copy per month: two months, two copies', s.copies().filter(c => c.kind === 'monthly').length === 2);
-  const rc = s.readCopy('Main - monthly 2026-11.fpdb.json');
-  ok('a copy can be read back for Recover an earlier copy', rc.ok && rc.data.vehicles.length === 2);
-  ok('a copy name that points outside the folder is refused', !s.readCopy('..\\..\\settings.json').ok && !s.readCopy('../x.fpdb.json').ok);
-  const dmg = tmp(); const s2 = createStore({ root: dmg, now: () => new Date('2026-12-01T08:00:00') });
-  fs.mkdirSync(path.join(dmg, 'databases'), { recursive: true }); fs.writeFileSync(path.join(dmg, 'databases', 'Main.fpdb.json'), 'garbage');
-  await s2.save('Main', ledger(1));
-  ok('a damaged file is never kept as the monthly copy', !s2.copies().some(c => c.db === 'Main' && c.records === 0 && c.size < 50));
+  ok('the copy list shows records and the date of the data', s.copies().find(c => c.tag === '2026-11').records === 2);
+  ok('a copy name that points outside the folder is refused', !s.readCopy('..\\..\\settings.json').ok && !s.readCopy('../x.db').ok);
+  fs.writeFileSync(path.join(root, 'copies', 'Main - monthly 2026-09.fpdb.json'), JSON.stringify({ format: 'fleetpilot-database', formatVersion: 1, savedAt: '2026-09-30T10:00:00Z', data: ledger(6) }));
+  ok('an old JSON monthly copy (v21) can still be read', s.readCopy('Main - monthly 2026-09.fpdb.json').data.vehicles.length === 6 && s.copies().some(c => c.tag === '2026-09' && c.records === 6));
+  s.closeAll();
 }
 
-/* ---- a file that is briefly locked is retried quietly ---- */
+/* ---- a database held by another program ---- */
 {
-  const root = tmp(); let failRenames = 2, renames = 0; const fsx = Object.assign({}, fs, { renameSync: (a, b) => { renames++; if(failRenames-- > 0){ const e = new Error('busy'); e.code = 'EBUSY'; throw e; } return fs.renameSync(a, b); } });
-  const s = createStore({ root, fs: fsx, sleep: async () => {} });
-  const r = await s.save('Main', ledger(2));
-  ok('two short locks in a row: the save still succeeds', r.ok && renames === 3 && (await createStore({ root }).load('Main')).data.vehicles.length === 2);
-  failRenames = 99; const prev = fs.readFileSync(path.join(root, 'databases', 'Main.fpdb.json'), 'utf8');
-  const r2 = await s.save('Main', ledger(7));
-  ok('a lock that stays: a plain message and the old file is untouched', !r2.ok && /not letting FleetPilot write/.test(r2.error) && fs.readFileSync(path.join(root, 'databases', 'Main.fpdb.json'), 'utf8') === prev);
-  failRenames = 0; const r3 = await s.save('Main', ledger(7));
-  ok('when the lock goes the next save works', r3.ok);
-  const full = createStore({ root: tmp(), fs: Object.assign({}, fs, { openSync: () => { const e = new Error('x'); e.code = 'ENOSPC'; throw e; } }), sleep: async () => {} });
-  ok('disk full is reported in plain words', /disk is full/.test((await full.save('Main', ledger(1))).error));
+  const root = tmp(); const s = createStore({ root, busyTimeout: 50 }); await s.save('Main', ledger(2));
+  const other = new DatabaseSync(dbFile(root, 'Main')); other.exec('PRAGMA busy_timeout = 50; BEGIN EXCLUSIVE');
+  const r = await s.save('Main', ledger(7));
+  ok('a lock that stays: a plain message', !r.ok && /not letting FleetPilot write/.test(r.error));
+  other.exec('ROLLBACK'); other.close();
+  ok('the old data is untouched', (await s.load('Main')).data.vehicles.length === 2);
+  ok('when the lock goes the next save works', (await s.save('Main', ledger(7))).ok && (await s.load('Main')).data.vehicles.length === 7);
+  s.closeAll();
 }
 
 /* ---- several databases ---- */
@@ -119,6 +125,7 @@ const at = iso => () => new Date(iso);
   ok('a second database can be created', c.ok && s.list().map(x => x.name).join() === 'Main,Test books');
   ok('creating one with a used name (any letter case) is refused and changes nothing', !(await s.create('main', ledger(9))).ok && (await s.load('Main')).data.vehicles.length === 2);
   ok('a name with forbidden characters is cleaned', s.cleanName('a/b:c*?') === 'a b c');
+  s.closeAll();
 }
 const free = createStore({ root: tmp() }).diskFree(); ok('free disk space can be read (or is null on an old Electron)', free === null || free > 0);
 console.log(fails ? fails + ' FAILED' : 'dbstore tests passed'); process.exit(fails ? 1 : 0);

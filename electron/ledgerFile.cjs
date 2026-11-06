@@ -1,61 +1,61 @@
 /* FleetPilot desktop side of the database. Runs in the Electron MAIN process.
 
+   The data is kept in SQLite (Node's built-in node:sqlite, so nothing to install or compile).
+
    WHERE THE DATA LIVES (per user, never inside the program folder, so an update never touches it):
-     %APPDATA%\FleetPilot\databases\<name>.fpdb.json        the database(s); one is shown at start
-     %APPDATA%\FleetPilot\copies\                          one safety copy per month, and one copy of an old-format file before it is upgraded
-     %APPDATA%\FleetPilot\damaged\                         a file that could not be read is set aside here, never overwritten
-     %APPDATA%\FleetPilot\settings.json                    which database opens at start, which was used last
+     %APPDATA%\FleetPilot\databases\<name>.db       the database(s), one SQLite file each; one is shown at start
+     %APPDATA%\FleetPilot\copies\                   one safety copy per month, and one copy before an upgrade of the data layout
+     %APPDATA%\FleetPilot\damaged\                  a file that could not be read is set aside here, never overwritten
+     %APPDATA%\FleetPilot\old-files\                the .fpdb.json files of v21 and earlier, after their data was moved into SQLite
+     %APPDATA%\FleetPilot\settings.json             which database opens at start, which was used last
    The folder is fixed ("FleetPilot" under the user's AppData), so it does not depend on the app name or ID in the build settings.
 
-   THE FILE carries a format version. A newer program opens an older file and upgrades it step by step (the old file is kept once, named with its
-   version). An older program refuses a newer file with a plain message and never writes to it.
-   Every write is: temp file, flush to disk, rename. A file that is briefly locked (antivirus, backup tool) is retried quietly.
+   INSIDE A DATABASE
+     meta(key, value)                       format name, format version, program version, name, saved at, record count
+     fields(key, pos, kind, value)          every top-level key of the ledger, in order: kind 'list' (rows in records) or 'value' (JSON)
+     records(list, pos, id, data)           one row per record of every list (vehicles, rentals, payments, ...), data is the record as JSON
+
+   THE FORMAT VERSION describes the data layout. A newer program opens an older database and upgrades it step by step (a copy of the
+   old one is kept once). An older program refuses a newer database with a plain message and never writes to it.
+   Every save is one transaction: it is either fully written or not at all.
    The testable part (createStore) does not need Electron; registerLedgerFile() wires it to the window. */
 'use strict';
 const fs = require('fs'), path = require('path');
+const { DatabaseSync } = require('node:sqlite');
 
 const FORMAT_NAME = 'fleetpilot-database';
 const CURRENT_FORMAT = 1;
-const APP_VERSION = 'v21';
-const EXT = '.fpdb.json';
+const APP_VERSION = 'v23';
+const EXT = '.db';
+const OLD_EXT = '.fpdb.json';
 const LIST_KEYS = ['vehicles', 'drivers', 'clients', 'bookings', 'rentals', 'expenses', 'payments', 'invoices', 'driverAllowances', 'accounts', 'loans', 'insurance', 'chama', 'fuelAccount', 'coops', 'individuals'];
-const RETRY_CODES = new Set(['EBUSY', 'EPERM', 'EACCES', 'EAGAIN', 'EMFILE', 'ENFILE']);
 
 /* UPGRADES[n] turns format n into format n + 1 (the ledger object in, the ledger object out). To change the data layout one day:
    raise CURRENT_FORMAT by one and add UPGRADES[<old number>] here. Nothing else has to change.
-   Format 0 is a bare ledger with no wrapper (what the browser storage held before this version): same content, now wrapped with a version. */
+   Format 0 is a bare ledger with no wrapper (the browser storage, and the oldest .fpdb.json files). */
 const UPGRADES = { 0: data => data };
+
+const SCHEMA = `
+  CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
+  CREATE TABLE IF NOT EXISTS fields (key TEXT PRIMARY KEY, pos INTEGER NOT NULL, kind TEXT NOT NULL, value TEXT);
+  CREATE TABLE IF NOT EXISTS records (list TEXT NOT NULL, pos INTEGER NOT NULL, id TEXT, data TEXT NOT NULL, PRIMARY KEY (list, pos));
+  CREATE INDEX IF NOT EXISTS records_by_id ON records (list, id);`;
 
 const countRecords = d => { let n = 0; if(d && typeof d === 'object') LIST_KEYS.forEach(k => { if(Array.isArray(d[k])) n += d[k].length; }); return n; };
 const cleanName = n => String(n == null ? '' : n).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/[. ]+$/, '').slice(0, 60);
 const two = n => String(n).padStart(2, '0');
-const sleepAsync = ms => new Promise(r => setTimeout(r, ms));
-const sleepSync = ms => { try{ Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); }catch(e){} };
+const sqlText = s => "'" + String(s).replace(/'/g, "''") + "'";
 
 function plainError(e){
-  const c = e && e.code;
-  if(c === 'ENOSPC') return 'the disk is full';
-  if(c === 'EBUSY' || c === 'EPERM' || c === 'EACCES') return 'Windows is not letting FleetPilot write the database file (another program may be holding it, or the folder is protected)';
-  if(c === 'ENOENT') return 'the FleetPilot data folder is missing';
+  const c = e && e.code, sc = e && e.errcode != null ? (e.errcode & 0xff) : -1;
+  if(c === 'ENOSPC' || sc === 13) return 'the disk is full';
+  if(sc === 5 || sc === 6 || c === 'EBUSY' || c === 'EPERM' || c === 'EACCES' || sc === 8) return 'Windows is not letting FleetPilot write the database file (another program may be holding it, or the folder is protected)';
+  if(c === 'ENOENT' || sc === 14) return 'the FleetPilot data folder is missing';
   return String(e && e.message || e);
 }
+const isDamage = e => { const sc = e && e.errcode != null ? (e.errcode & 0xff) : -1; return sc === 11 || sc === 26 || !!(e && e.damaged); };   // SQLITE_CORRUPT, SQLITE_NOTADB
 
-/* ---- the file text: a small header first (so lists can read it cheaply), then the ledger ---- */
-function serialize(name, data, appVersion, format, now){
-  const head = JSON.stringify({ format: FORMAT_NAME, formatVersion: format, appVersion, name, savedAt: now().toISOString(), records: countRecords(data) });
-  return head.slice(0, -1) + ',"data":' + JSON.stringify(data) + '}';
-}
-function readHeaderOf(file, fsx){
-  try{
-    const fd = fsx.openSync(file, 'r');
-    try{
-      const buf = Buffer.alloc(1200), n = fsx.readSync(fd, buf, 0, 1200, 0), text = buf.toString('utf8', 0, n), i = text.indexOf(',"data":');
-      if(i < 0) return null;
-      const h = JSON.parse(text.slice(0, i) + '}'); return h && h.format === FORMAT_NAME ? h : null;
-    }finally{ fsx.closeSync(fd); }
-  }catch(e){ return null; }
-}
-/* text -> { version, data, header } or throws Error with .damaged = true */
+/* ---------- the old JSON files (read only: moving them into SQLite, and old monthly copies) ---------- */
 function parseText(text){
   let o; try{ o = JSON.parse(text); }catch(e){ const x = new Error('the file is not readable (' + e.message + ')'); x.damaged = true; throw x; }
   if(o && o.format === FORMAT_NAME && Number.isInteger(o.formatVersion) && o.data && typeof o.data === 'object') return { version: o.formatVersion, data: o.data, header: o };
@@ -63,99 +63,169 @@ function parseText(text){
   const x = new Error('the file does not hold a FleetPilot database'); x.damaged = true; throw x;
 }
 
+/* ---------- one SQLite file ---------- */
+function openDb(file, opts){
+  const db = new DatabaseSync(file, opts && opts.readOnly ? { readOnly: true } : {});
+  try{
+    db.exec('PRAGMA busy_timeout = ' + ((opts && opts.busyTimeout) || 3000));
+    if(!(opts && opts.readOnly)){ db.exec('PRAGMA journal_mode = DELETE; PRAGMA synchronous = FULL;'); db.exec(SCHEMA); }
+  }catch(e){ try{ db.close(); }catch(e2){} throw e; }
+  return db;
+}
+function readMeta(db){
+  const m = {}; db.prepare('SELECT key, value FROM meta').all().forEach(r => { m[r.key] = r.value; });
+  if(m.format !== FORMAT_NAME){ const x = new Error('the file does not hold a FleetPilot database'); x.damaged = true; throw x; }
+  return { format: m.format, formatVersion: Number(m.formatVersion) || 0, appVersion: m.appVersion || '', name: m.name || '', savedAt: m.savedAt || '', records: Number(m.records) || 0 };
+}
+function readLedger(db){
+  const out = {}, lists = {};
+  db.prepare('SELECT key, kind, value FROM fields ORDER BY pos').all().forEach(f => {
+    if(f.kind === 'list'){ out[f.key] = []; lists[f.key] = out[f.key]; }
+    else out[f.key] = f.value == null ? null : JSON.parse(f.value);
+  });
+  db.prepare('SELECT list, data FROM records ORDER BY list, pos').all().forEach(r => { if(lists[r.list]) lists[r.list].push(JSON.parse(r.data)); });
+  return out;
+}
+function writeLedger(db, name, data, appVersion, format, savedAt){
+  db.exec('BEGIN IMMEDIATE');
+  try{
+    db.exec('DELETE FROM records; DELETE FROM fields; DELETE FROM meta;');
+    const field = db.prepare('INSERT INTO fields (key, pos, kind, value) VALUES (?, ?, ?, ?)');
+    const rec = db.prepare('INSERT INTO records (list, pos, id, data) VALUES (?, ?, ?, ?)');
+    let pos = 0;
+    Object.keys(data).forEach(k => {
+      const v = data[k];
+      if(v === undefined || typeof v === 'function') return;
+      if(Array.isArray(v)){
+        field.run(k, pos++, 'list', null);
+        v.forEach((r, i) => { const id = r && typeof r === 'object' && r.id != null ? String(r.id) : null; rec.run(k, i, id, r === undefined ? 'null' : JSON.stringify(r)); });
+      }else field.run(k, pos++, 'value', JSON.stringify(v));
+    });
+    const meta = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
+    [['format', FORMAT_NAME], ['formatVersion', String(format)], ['appVersion', appVersion], ['name', name], ['savedAt', savedAt], ['records', String(countRecords(data))]].forEach(p => meta.run(p[0], p[1]));
+    db.exec('COMMIT');
+  }catch(e){ try{ db.exec('ROLLBACK'); }catch(e2){} throw e; }
+}
+/* the whole check of a file opened for reading: it is SQLite, it is not damaged, it holds a FleetPilot database */
+function readFile(file, busyTimeout){
+  const db = openDb(file, { readOnly: true, busyTimeout });
+  try{
+    const ok = db.prepare('PRAGMA quick_check').get();
+    if(!ok || Object.values(ok)[0] !== 'ok'){ const x = new Error('the database file is damaged'); x.damaged = true; throw x; }
+    return { header: readMeta(db), data: readLedger(db) };
+  }finally{ db.close(); }
+}
+
 function createStore(opts){
-  const root = opts.root, fsx = opts.fs || fs, now = opts.now || (() => new Date());
+  const root = opts.root, now = opts.now || (() => new Date());
   const appVersion = opts.appVersion || APP_VERSION, current = opts.current || CURRENT_FORMAT, steps = opts.upgrades || UPGRADES;
-  const sleepA = opts.sleep || sleepAsync, sleepS = opts.sleepSync || sleepSync;
-  const dirs = { db: path.join(root, 'databases'), copies: path.join(root, 'copies'), damaged: path.join(root, 'damaged') };
+  const busyTimeout = opts.busyTimeout || 3000;
+  const dirs = { db: path.join(root, 'databases'), copies: path.join(root, 'copies'), damaged: path.join(root, 'damaged'), old: path.join(root, 'old-files') };
   const settingsFile = path.join(root, 'settings.json');
-  const locked = new Map();                       // database name (lower case) -> the plain message: a newer file, never written to
+  const locked = new Map();                       // database name (lower case) -> the plain message: a newer database, never written to
+  const moved = new Map();                        // database name (lower case) -> the old .fpdb.json file its data came from (this start only)
   let chain = Promise.resolve();
   const queue = fn => { const p = chain.then(fn, fn); chain = p.catch(() => {}); return p; };
-  const mk = d => fsx.mkdirSync(d, { recursive: true });
-  const exists = f => { try{ fsx.statSync(f); return true; }catch(e){ return false; } };
+  const mk = d => fs.mkdirSync(d, { recursive: true });
+  const exists = f => { try{ fs.statSync(f); return true; }catch(e){ return false; } };
   const fileFor = name => path.join(dirs.db, name + EXT);
   const monthKey = () => { const d = now(); return d.getFullYear() + '-' + two(d.getMonth() + 1); };
   const monthlyPath = (name, month) => path.join(dirs.copies, name + ' - monthly ' + month + EXT);
   const oldFormatPath = (name, v) => path.join(dirs.copies, name + ' - old format v' + v + EXT);
+  const stamp = () => now().toISOString().replace(/[:.]/g, '-');
 
-  function writeOnce(file, text){
-    const tmp = file + '.tmp', buf = Buffer.from(text, 'utf8');
-    const fd = fsx.openSync(tmp, 'w');
-    try{ let off = 0; while(off < buf.length) off += fsx.writeSync(fd, buf, off, buf.length - off); try{ fsx.fsyncSync(fd); }catch(e){} }
-    finally{ fsx.closeSync(fd); }
-    fsx.renameSync(tmp, file);
+  /* one open connection per database while the program runs */
+  const conns = new Map();
+  function conn(name){
+    const key = name.toLowerCase(); let c = conns.get(key);
+    if(!c){ mk(dirs.db); c = openDb(fileFor(name), { busyTimeout }); conns.set(key, c); }
+    return c;
   }
-  async function writeAtomic(file, text){
-    let last;
-    for(let i = 0; i < 6; i++){
-      try{ writeOnce(file, text); return; }catch(e){ last = e; if(!(e && RETRY_CODES.has(e.code))) break; await sleepA(120 * (i + 1)); }
-    }
-    throw last;
-  }
-  function writeAtomicSync(file, text){
-    let last;
-    for(let i = 0; i < 4; i++){
-      try{ writeOnce(file, text); return; }catch(e){ last = e; if(!(e && RETRY_CODES.has(e.code))) break; sleepS(60 * (i + 1)); }
-    }
-    throw last;
-  }
-  const validFile = f => { try{ parseText(fsx.readFileSync(f, 'utf8')); return true; }catch(e){ return false; } };
+  function release(name){ const key = String(name).toLowerCase(), c = conns.get(key); if(c){ try{ c.close(); }catch(e){} conns.delete(key); } }
+  function closeAll(){ Array.from(conns.keys()).forEach(release); }
+  function copyDb(name, target){ mk(path.dirname(target)); conn(name).exec('VACUUM INTO ' + sqlText(target)); }
+  const validFile = f => { try{ readFile(f, busyTimeout); return true; }catch(e){ return false; } };
 
   /* ---------- settings (which database opens at start) ---------- */
   function getSettings(){
-    let s = {}; try{ s = JSON.parse(fsx.readFileSync(settingsFile, 'utf8')) || {}; }catch(e){}
+    let s = {}; try{ s = JSON.parse(fs.readFileSync(settingsFile, 'utf8')) || {}; }catch(e){}
     return { startWith: typeof s.startWith === 'string' && s.startWith ? s.startWith : 'last', lastUsed: typeof s.lastUsed === 'string' ? s.lastUsed : '', migrated: s.migrated === true };
   }
   function setSettings(patch){
     const s = Object.assign(getSettings(), patch || {});
     if(typeof s.startWith !== 'string' || !s.startWith) s.startWith = 'last';
-    mk(root); writeOnce(settingsFile, JSON.stringify(s)); return s;
+    mk(root); const tmp = settingsFile + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(s)); fs.renameSync(tmp, settingsFile); return s;
   }
+
+  function runSteps(data, from){
+    let v = from, d = data;
+    while(v < current){ const step = steps[v]; if(typeof step !== 'function') throw new Error('no upgrade step from format ' + v); d = step(d) || d; v++; }
+    return d;
+  }
+  function newerMessage(v){ return 'This database was saved by a newer version of FleetPilot (its format is ' + v + ', this program understands up to ' + current + '). Install the newest FleetPilot to open it. Nothing was changed and nothing will be written to it.'; }
+
+  /* ---------- once: the .fpdb.json files of v21 and earlier are moved into SQLite ---------- */
+  function moveOldFiles(){
+    let names = []; try{ names = fs.readdirSync(dirs.db); }catch(e){ return; }
+    names.filter(n => n.endsWith(OLD_EXT)).forEach(n => {
+      const name = n.slice(0, -OLD_EXT.length), src = path.join(dirs.db, n);
+      if(exists(fileFor(name))) return;                       // already moved (SQLite wins); the old file stays where it is
+      let parsed;
+      try{ parsed = parseText(fs.readFileSync(src, 'utf8')); }
+      catch(e){ if(e.damaged){ try{ mk(dirs.damaged); fs.renameSync(src, path.join(dirs.damaged, name + ' - ' + stamp() + OLD_EXT)); }catch(e2){} } return; }
+      if(parsed.version > current) return;                    // a newer program's file: leave it alone
+      const dbFile = fileFor(name);
+      try{
+        const data = runSteps(JSON.parse(JSON.stringify(parsed.data)), parsed.version);
+        const c = openDb(dbFile, { busyTimeout });
+        try{ writeLedger(c, name, data, appVersion, current, parsed.header.savedAt || now().toISOString()); }finally{ c.close(); }
+        mk(dirs.old); fs.renameSync(src, path.join(dirs.old, n));
+        moved.set(name.toLowerCase(), path.join(dirs.old, n));
+      }catch(e){ try{ fs.rmSync(dbFile, { force: true }); }catch(e2){} }   // try again next start; the JSON file was not touched
+    });
+  }
+  moveOldFiles();
 
   /* ---------- the databases ---------- */
   function list(){
-    let names = []; try{ names = fsx.readdirSync(dirs.db); }catch(e){}
+    let names = []; try{ names = fs.readdirSync(dirs.db); }catch(e){}
     return names.filter(n => n.endsWith(EXT)).map(n => {
-      const f = path.join(dirs.db, n), st = fsx.statSync(f), h = readHeaderOf(f, fsx) || {};
-      return { name: n.slice(0, -EXT.length), modified: st.mtimeMs, size: st.size, savedAt: h.savedAt || '', records: h.records || 0, formatVersion: h.formatVersion == null ? 0 : h.formatVersion };
+      const f = path.join(dirs.db, n), st = fs.statSync(f); let h = {};
+      try{ const c = openDb(f, { readOnly: true, busyTimeout }); try{ h = readMeta(c); }finally{ c.close(); } }catch(e){}
+      return { name: n.slice(0, -EXT.length), modified: st.mtimeMs, size: st.size, savedAt: h.savedAt || '', records: h.records || 0, formatVersion: h.formatVersion || 0 };
     }).sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
   }
   function resolveName(name){          // the exact existing name for a name typed in any letter case
     const n = cleanName(name); if(!n) return '';
     const hit = list().find(x => x.name.toLowerCase() === n.toLowerCase()); return hit ? hit.name : n;
   }
-  function runSteps(data, from){
-    let v = from, d = data;
-    while(v < current){ const step = steps[v]; if(typeof step !== 'function') throw new Error('no upgrade step from format ' + v); d = step(d) || d; v++; }
-    return d;
-  }
-  function newerMessage(v){ return 'This database was saved by a newer version of FleetPilot (its file format is ' + v + ', this program understands up to ' + current + '). Install the newest FleetPilot to open it. Nothing was changed and nothing will be written to it.'; }
 
   async function load(name){
     name = resolveName(name); if(!name) return { ok: false, reason: 'missing', error: 'no database name' };
     const file = fileFor(name); if(!exists(file)) return { ok: false, reason: 'missing', name };
+    release(name);
     let parsed;
-    try{ parsed = parseText(fsx.readFileSync(file, 'utf8')); }
+    try{ parsed = readFile(file, busyTimeout); }
     catch(e){
-      if(!e.damaged) return { ok: false, reason: 'unreadable', name, error: plainError(e) };
+      if(!isDamage(e)) return { ok: false, reason: 'unreadable', name, error: plainError(e) };
       let setAside = '';          // the damaged file is moved away so that the next save can never overwrite it
-      try{ mk(dirs.damaged); setAside = path.join(dirs.damaged, name + ' - ' + now().toISOString().replace(/[:.]/g, '-') + EXT); fsx.renameSync(file, setAside); }catch(e2){ setAside = ''; }
+      try{ mk(dirs.damaged); setAside = path.join(dirs.damaged, name + ' - ' + stamp() + EXT); fs.renameSync(file, setAside); }catch(e2){ setAside = ''; }
       return { ok: false, reason: 'damaged', name, error: e.message, setAside };
     }
-    if(parsed.version > current){ locked.set(name.toLowerCase(), newerMessage(parsed.version)); return { ok: false, reason: 'newer', name, fileVersion: parsed.version, message: newerMessage(parsed.version) }; }
+    const v = parsed.header.formatVersion;
+    if(v > current){ locked.set(name.toLowerCase(), newerMessage(v)); return { ok: false, reason: 'newer', name, fileVersion: v, message: newerMessage(v) }; }
     let data = parsed.data, upgradedFrom = null, keptCopy = '';
-    if(parsed.version < current){
+    if(v < current){
       try{
-        const stepped = runSteps(JSON.parse(JSON.stringify(data)), parsed.version);
-        mk(dirs.copies);
-        const keep = oldFormatPath(name, parsed.version);           // one copy of the old file, only now, named with its version
-        if(!exists(keep)){ fsx.copyFileSync(file, keep); keptCopy = keep; }
-        data = stepped; upgradedFrom = parsed.version;
-        await queue(() => writeAtomic(file, serialize(name, data, appVersion, current, now)));
+        const stepped = runSteps(JSON.parse(JSON.stringify(data)), v);
+        const keep = oldFormatPath(name, v);                  // one copy of the old database, only now, named with its version
+        if(!exists(keep)){ copyDb(name, keep); keptCopy = keep; }
+        data = stepped; upgradedFrom = v;
+        await queue(() => writeLedger(conn(name), name, data, appVersion, current, now().toISOString()));
       }catch(e){ return { ok: false, reason: 'upgrade-failed', name, error: plainError(e) }; }
     }
-    return { ok: true, name, data, savedAt: parsed.header.savedAt || '', formatVersion: current, upgradedFrom, keptCopy };
+    const movedFrom = moved.get(name.toLowerCase()) || '';
+    return { ok: true, name, data, savedAt: parsed.header.savedAt || '', formatVersion: current, upgradedFrom, keptCopy, movedFrom };
   }
 
   function prepareSave(name, data){
@@ -165,41 +235,37 @@ function createStore(opts){
     const msg = locked.get(name.toLowerCase()); if(msg) return { fail: { ok: false, locked: true, error: msg } };
     return { name };
   }
-  /* monthly copy: the first save of a new month keeps the file as it stood before that save (or, for a brand new file, the file just written) */
+  /* monthly copy: the first save of a new month keeps the database as it stood before that save (or, for a brand new one, as just written) */
   function monthlyBefore(name){
     const month = monthKey(), copy = monthlyPath(name, month), file = fileFor(name);
     if(exists(copy)) return { done: true };
     if(!exists(file)) return { after: true, copy, month };
-    if(!validFile(file)) return { done: false };           // never keep a damaged file as the monthly copy
-    try{ mk(dirs.copies); fsx.copyFileSync(file, copy); return { done: true, made: copy, month }; }catch(e){ return { done: false, error: plainError(e) }; }
+    if(!validFile(file)) return { done: false };           // never keep a damaged database as the monthly copy
+    try{ copyDb(name, copy); return { done: true, made: copy, month }; }catch(e){ return { done: false, error: plainError(e) }; }
   }
-  function afterWrite(name, file, pre){
+  function afterWrite(name, pre){
     let made = pre.made || '', copyError = pre.error || '';
-    if(pre.after){ try{ mk(dirs.copies); fsx.copyFileSync(file, pre.copy); made = pre.copy; }catch(e){ copyError = plainError(e); } }
+    if(pre.after){ try{ copyDb(name, pre.copy); made = pre.copy; }catch(e){ copyError = plainError(e); } }
     return { monthlyCopy: made ? path.basename(made) : '', copyError };
   }
-  function diskFree(){ try{ if(typeof fsx.statfsSync === 'function'){ const s = fsx.statfsSync(root); return Number(s.bavail) * Number(s.bsize); } }catch(e){} return null; }
+  function diskFree(){ try{ if(typeof fs.statfsSync === 'function'){ const s = fs.statfsSync(root); return Number(s.bavail) * Number(s.bsize); } }catch(e){} return null; }
 
+  /* node:sqlite is synchronous, so the normal save and the "window is closing" save are the same work; the normal one waits its turn */
+  function writeNow(name, data){
+    try{
+      const pre = monthlyBefore(name), savedAt = now().toISOString();
+      writeLedger(conn(name), name, data, appVersion, current, savedAt);
+      let bytes = 0; try{ bytes = fs.statSync(fileFor(name)).size; }catch(e){}
+      return Object.assign({ ok: true, name, savedAt, bytes, free: diskFree() }, afterWrite(name, pre));
+    }catch(e){ return { ok: false, error: plainError(e), code: e && (e.code || e.errcode) || '' }; }
+  }
   function save(name, data){
     const p = prepareSave(name, data); if(p.fail) return Promise.resolve(p.fail);
-    return queue(async () => {
-      try{
-        mk(dirs.db); const file = fileFor(p.name), text = serialize(p.name, data, appVersion, current, now);
-        const pre = monthlyBefore(p.name);
-        await writeAtomic(file, text);
-        return Object.assign({ ok: true, name: p.name, savedAt: now().toISOString(), bytes: text.length, free: diskFree() }, afterWrite(p.name, file, pre));
-      }catch(e){ return { ok: false, error: plainError(e), code: e && e.code || '' }; }
-    });
+    return queue(() => writeNow(p.name, data));
   }
-  /* the same save, but synchronous: for the moment the window is closing */
   function saveSync(name, data){
     const p = prepareSave(name, data); if(p.fail) return p.fail;
-    try{
-      mk(dirs.db); const file = fileFor(p.name), text = serialize(p.name, data, appVersion, current, now);
-      const pre = monthlyBefore(p.name);
-      writeAtomicSync(file, text);
-      return Object.assign({ ok: true, name: p.name, savedAt: now().toISOString(), bytes: text.length, free: diskFree() }, afterWrite(p.name, file, pre));
-    }catch(e){ return { ok: false, error: plainError(e), code: e && e.code || '' }; }
+    return writeNow(p.name, data);
   }
   /* a new database: refuses a name that is already used (any letter case), never overwrites */
   async function create(name, data){
@@ -208,16 +274,21 @@ function createStore(opts){
     return save(n, data);
   }
 
-  /* ---------- safety copies ---------- */
-  const RE_MONTH = /^(.*) - monthly (\d{4}-\d{2})\.fpdb\.json$/, RE_OLD = /^(.*) - old format v(\d+)\.fpdb\.json$/;
+  /* ---------- safety copies (SQLite; monthly copies from v21 and earlier are .fpdb.json and can still be read) ---------- */
+  const RE_MONTH = /^(.*) - monthly (\d{4}-\d{2})(\.db|\.fpdb\.json)$/, RE_OLD = /^(.*) - old format v(\d+)(\.db|\.fpdb\.json)$/;
+  function readAnyCopy(file){
+    if(file.endsWith(OLD_EXT)){ const p = parseText(fs.readFileSync(file, 'utf8')); return { version: p.version, data: p.data, savedAt: p.header.savedAt || '', records: countRecords(p.data) }; }
+    const r = readFile(file, busyTimeout); return { version: r.header.formatVersion, data: r.data, savedAt: r.header.savedAt, records: r.header.records };
+  }
   function copies(){
-    let names = []; try{ names = fsx.readdirSync(dirs.copies); }catch(e){}
+    let names = []; try{ names = fs.readdirSync(dirs.copies); }catch(e){}
     const out = [];
     names.forEach(n => {
       let m = RE_MONTH.exec(n), kind = 'monthly', tag = '';
       if(m) tag = m[2]; else { m = RE_OLD.exec(n); kind = 'format'; if(m) tag = 'v' + m[2]; }
       if(!m) return;
-      const f = path.join(dirs.copies, n), st = fsx.statSync(f), h = readHeaderOf(f, fsx) || {};
+      const f = path.join(dirs.copies, n), st = fs.statSync(f); let h = {};
+      try{ if(n.endsWith(EXT)){ const c = openDb(f, { readOnly: true, busyTimeout }); try{ h = readMeta(c); }finally{ c.close(); } } else h = readAnyCopy(f); }catch(e){}
       out.push({ id: n, db: m[1], kind, tag, madeAt: st.mtimeMs, savedAt: h.savedAt || '', records: h.records || 0, size: st.size });
     });
     return out.sort((a, b) => b.madeAt - a.madeAt);
@@ -226,12 +297,12 @@ function createStore(opts){
     const base = path.basename(String(id || ''));
     if(base !== String(id) || !(RE_MONTH.test(base) || RE_OLD.test(base))) return { ok: false, error: 'not a copy of this program' };
     try{
-      const parsed = parseText(fsx.readFileSync(path.join(dirs.copies, base), 'utf8'));
-      if(parsed.version > current) return { ok: false, error: newerMessage(parsed.version) };
-      return { ok: true, id: base, data: runSteps(JSON.parse(JSON.stringify(parsed.data)), parsed.version), savedAt: parsed.header.savedAt || '' };
+      const c = readAnyCopy(path.join(dirs.copies, base));
+      if(c.version > current) return { ok: false, error: newerMessage(c.version) };
+      return { ok: true, id: base, data: runSteps(JSON.parse(JSON.stringify(c.data)), c.version), savedAt: c.savedAt };
     }catch(e){ return { ok: false, error: plainError(e) }; }
   }
-  return { root, dirs, getSettings, setSettings, list, load, save, saveSync, create, copies, readCopy, diskFree, cleanName, monthKey, isLocked: n => locked.has(String(n).toLowerCase()) };
+  return { root, dirs, getSettings, setSettings, list, load, save, saveSync, create, copies, readCopy, diskFree, cleanName, monthKey, closeAll, isLocked: n => locked.has(String(n).toLowerCase()) };
 }
 
 /* ---------- Electron wiring (needs Electron; not loaded by the tests) ---------- */
@@ -244,6 +315,7 @@ function registerLedgerFile(){
   /* two copies of the program writing one database would overwrite each other: a second start just brings the first to the front */
   if(!app.requestSingleInstanceLock()){ app.quit(); return store; }
   app.on('second-instance', () => { const w = BrowserWindow.getAllWindows()[0]; if(w){ if(w.isMinimized()) w.restore(); w.focus(); } });
+  app.on('will-quit', () => store.closeAll());
 
   ipcMain.handle('db:settings', safe(() => ({ ok: true, settings: store.getSettings(), databases: store.list(), folder: root })));
   ipcMain.handle('db:setSettings', safe((ev, patch) => ({ ok: true, settings: store.setSettings(patch) })));

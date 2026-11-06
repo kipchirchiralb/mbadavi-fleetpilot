@@ -15,7 +15,7 @@ function createWindow() {
     autoHideMenuBar: true,
     icon: path.join(DIST_DIR, "favicon.ico"),
     webPreferences: {
-      // Gives the page window.fleetDesktop: the database file in %APPDATA%\FleetPilot (see ledgerFile.cjs).
+      // Gives the page window.fleetDesktop: the SQLite database in %APPDATA%\FleetPilot (see ledgerFile.cjs).
       preload: path.join(__dirname, "ledgerPreload.cjs"),
       nodeIntegration: false,
       contextIsolation: true,

@@ -23,7 +23,7 @@ The previous modular version is kept untouched in `backup-before-v22/`.
 ```
 electron/
   main.cjs              Electron main process: window, single-instance lock, link handling
-  ledgerFile.cjs        Database file in %APPDATA%\FleetPilot (save on every change, monthly copies, format upgrades)
+  ledgerFile.cjs        SQLite database in %APPDATA%\FleetPilot (save on every change, monthly copies, format upgrades)
   ledgerPreload.cjs     Preload: gives the page window.fleetDesktop (the only door to that folder)
 index.html              App markup and styles (Vite entry, self-contained)
 public/                 Icons copied as-is into the build
@@ -31,7 +31,8 @@ build/                  electron-builder resources (app icon)
 src/
   main.js               Bootstrap: error bar, ExcelJS, IndexedDB fallback, table tools, keyboard nav, then ledger.js
   ledger.js             The app core: state, screens, save/open, dashboard, reports
-  dbPersist.js          Opens/saves the desktop database file; moves old browser storage into it once
+  dbPersist.js          Opens/saves the desktop SQLite database; moves old browser storage into it once
+  order.js              Table order: newest record first (inside each month for month-grouped tables)
   data/repository.js    IndexedDB storage (browser use, and fallback in the .exe)
   importer/             Excel import of the PERFOMANCE workbook (rentals, expenses, invoices, payments, admin sheets)
   calendar.js, holidays.js, today.js, idle.js           Calendar, Kenyan holidays, Today box, idle screen
@@ -55,9 +56,11 @@ Run each from inside `test/`, e.g. `cd test; node yearround.test.mjs`. All 25 `*
 
 ## Data
 
-In the desktop app the ledger is a file: `%APPDATA%\FleetPilot\databases\<name>.fpdb.json`, written about half a second after each change and again when the window closes. One safety copy per month goes to `copies\`. Installing a newer version never touches this folder. Pilot > Database chooses which database opens at start.
+In the desktop app the ledger is a SQLite database: `%APPDATA%\FleetPilot\databases\<name>.db`, using the `node:sqlite` module built into Electron (nothing to install). Each record is a row in the `records` table. Every save is one transaction, about half a second after each change and again when the window closes. One safety copy per month goes to `copies\`. Installing a newer version never touches this folder. Pilot > Database chooses which database opens at start.
 
-On the first start after the update, the data in the old browser storage (IndexedDB) is moved into the file once. In a plain browser (`npm run dev`) the app keeps using IndexedDB.
+On the first start of this version, any `.fpdb.json` database from v21 or earlier is moved into SQLite once. The old file is kept, unchanged, in `old-files\`. Old monthly `.fpdb.json` copies can still be opened from Recover an earlier copy.
+
+Data in the old browser storage (IndexedDB) from before v21 is also moved in once. In a plain browser (`npm run dev`) the app keeps using IndexedDB.
 
 Excel is only used when you ask: File & backup > Save (to Excel) / Import.
 

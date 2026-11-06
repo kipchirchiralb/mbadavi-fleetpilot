@@ -1,6 +1,7 @@
 /* Fuel (main menu, below Performance): every fuel fill with its account (Ola / Outside) and the rental it was bought for,
    plus the fuel audit per rental. The money comes from the same expenses everything else uses (see fuelCore.js), so nothing is entered twice.
    A fill tied to a rental that is still running counts on that rental at once, in Performance, Coop, Sub-hire and the audit. */
+import { newestFirst, newestFirstByMonth } from './order.js';
 import { ACCOUNTS, SOURCES, fillAccount, fillsOf, rentalForFill, addFill, fuelAudit, rentalFuel } from './fuelCore.js';
 import { olaFills, outsideFills, untaggedFills, openingBalance, topups } from './fuelAccount.js';
 import { applyFacets, facetCounts, chipsHtml, chipTap, ensureChipStyles } from './chips.js';
@@ -39,7 +40,7 @@ export function initFuel(ctx){
       test: (x, k) => k === 'Mixed' ? isMixedFill(x) : fillAccount(x) === (k === 'none' ? '' : k) };
     const viewActive = { view: st.mixed ? 'Mixed' : st.account };
     const viewCounts = facetCounts(baseFills, [viewGroup], {}).view;
-    const fills = applyFacets(baseFills, [viewGroup], viewActive).sort((a, b) => (a.date || '') < (b.date || '') ? 1 : -1);
+    const fills = newestFirstByMonth(applyFacets(baseFills, [viewGroup], viewActive), x => String(x.date || '').slice(0, 7));
     const ola = olaFills(d), out = outsideFills(d), un = untaggedFills(d), bal = openingBalance(d) + sumOf(topups(d)) - sumOf(ola);
     const mOla = sumOf(ola.filter(inMonth)), mOut = sumOf(out.filter(inMonth));
     const untied = fills.filter(x => x.source !== 'rental' && !x.rentalId);

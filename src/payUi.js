@@ -2,6 +2,7 @@
    Form: Money in / Money out, a category, the few fields that category needs, date, amount. "Record payment" writes it into the place that
    already feeds the totals (payRoute.js). When something is unclear a pop-up asks one question at a time.
    List: every payment from every place, with a filter. Click ↗ to open where it was recorded, ✕ to take it back. */
+import { newestFirst, newestFirstByMonth } from './order.js';
 import { IN_CATS, OUT_CATS, outCats, validate, check, post, unified, removeEntry, money, rentalLabel, owedOn, paidOn, unpaidRentals, invoiceRentals, invoiceOwed, coopRentals, peopleNames,
   unclearedDriverJobs, unclearedOwnerJobs, loanLeft } from './payRoute.js';
 import { scheduleOf, paidOf, loanName, monthName } from './loans.js';
@@ -190,7 +191,7 @@ export function initPayHub(ctx){
   let cache = null;
   const rowByKey = k => (cache || []).find(r => r.key === k);
   function drawList(){
-    cache = unified(db());
+    cache = newestFirstByMonth(unified(db()), r => r.month);
     const months = [...new Set(cache.map(r => r.month).filter(Boolean))].sort().reverse(), cats = [...new Set(cache.map(r => r.cat))].sort();
     const q = st.q.trim().toLowerCase(), viewOn = ctx.viewActive && ctx.viewActive(), pById = new Map(db().payments.map(p => [String(p.id), p]));
     const rows = cache.filter(r => !viewOn || (r.kind === 'payment' && ctx.paymentPasses(pById.get(String(r.id))))).filter(r => (!st.fDir || r.dir === st.fDir) && (!st.fCat || r.cat === st.fCat) && (!st.fMonth || r.month === st.fMonth) && (!q || [r.cat, r.who, r.detail, r.note, r.date, r.status, String(r.amount)].join(' ').toLowerCase().includes(q)));

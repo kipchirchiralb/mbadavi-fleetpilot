@@ -2,6 +2,7 @@
    every line behind it, so "Garage" lists all the garage lines of that month and you can see how the month ran.
    Used twice: the "All expenses" button inside Expenses (one month at a time), and Pilot > Pages > All expenses (any range, whole or month by month).
    The figures come from drillRecords/monthlySummary, the same functions as the Overview, so the totals always agree with it. */
+import { newestFirst, newestFirstByMonth } from './order.js';
 import { SUMMARY_COLUMNS, CAT_COL } from './summary.js';
 import { drillRecords } from './pages.js';
 import { gridHtml, bindGrid } from './gridEdit.js';
@@ -82,7 +83,7 @@ function detail(db, ex, ctx){
   const rest = d.rows.filter(r => !editable.includes(r));
   const cats = [...new Set(['Fuel', 'Maintenance', 'Garage', 'Insurance', 'Cleaning', 'Airport', 'Parking', 'Driver allowance', 'Owner payout', 'Leased car', 'Salaries', 'Rent', 'Utilities', 'Bank Charges', 'Transport', 'Sub-hire driver', 'Other'].concat((db.settings && db.settings.expenseTypes) || [], (db.expenses || []).map(x => x.category).filter(Boolean)))];
   const veh = [{ value: '', label: 'Office' }].concat([...(db.vehicles || [])].sort((a, b) => a.reg < b.reg ? -1 : 1).map(v => ({ value: String(v.id), label: v.reg })));
-  const rows = editable.map(r => exp.get(String(r.open.id))).sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1).map(x => ({ id: x.id, date: x.date, vehicleId: x.vehicleId == null ? '' : String(x.vehicleId), category: x.category, desc: x.desc || '', amount: num(x.amount) }));
+  const rows = newestFirstByMonth(editable.map(r => exp.get(String(r.open.id))), x => String(x.date || '').slice(0, 7)).map(x => ({ id: x.id, date: x.date, vehicleId: x.vehicleId == null ? '' : String(x.vehicleId), category: x.category, desc: x.desc || '', amount: num(x.amount) }));
   const find = id => (db.expenses || []).find(x => String(x.id) === String(id));
   registry.exlines = { id: 'exlines', title: t.label + ' · ' + (from === to ? monthName(from) : monthName(from) + ' to ' + monthName(to)) + (ex.vehicleId ? ' · ' + ((db.vehicles || []).find(v => String(v.id) === String(ex.vehicleId)) || {}).reg : ''),
     fmt: f, formats: (db.settings.rowFormats || {}).exlines, label: 'TOTAL', rows,

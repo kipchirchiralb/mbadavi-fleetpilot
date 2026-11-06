@@ -1,6 +1,7 @@
 /* Sub-hire (main menu, below Performance): the sub-hire table.
    One line per sub-hire rental (a car from an owner, one-off cars included). Pick the sub-hire driver of a rental right here and view that driver's jobs.
    Everything is drawn from the rentals (subhireCore.js); fuel is the same figure used everywhere (fuelCore.js). Nothing is typed twice. */
+import { newestFirst, newestFirstByMonth } from './order.js';
 import { applyFacets, facetCounts, chipsHtml, chipTap, ensureChipStyles } from './chips.js';
 import { STATUSES, STATUS_LABEL, monthLabel, todayISO, ownerRows, driverRows, monthsOf, ownerSummary, driverSummary, setOwnerStatus, setDriverStatus, driverStatus, driverAmount } from './subhireCore.js';
 
@@ -23,6 +24,7 @@ export function initSubhirePanel(ctx){
     let rows = all.filter(r => !sel || r.month === sel);
     if(st.owner && owners.some(o => o.key === st.owner)) rows = rows.filter(r => r.ownerKey === st.owner); else st.owner = '';
     if(q) rows = rows.filter(r => [r.reg, r.owner, r.client, r.job, r.driver].some(x => String(x || '').toLowerCase().includes(q)));
+    rows = newestFirstByMonth(rows, r => r.month);
     const drvById = new Map(driverRows(d).map(r => [r.id, r]));
     const rentalOf = id => d.rentals.find(x => String(x.id) === String(id)) || {};
     const subDrivers = d.drivers.filter(x => x.kind === 'subhire');

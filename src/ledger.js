@@ -17,6 +17,7 @@ import { syncOwnerFromTick } from './subhireCore.js';
 import { OWNER_SHEETS } from './ownerSheets.js';
 import { hasDesktopDb, startDatabase, DesktopDb, renderDbBox, DEFAULT_NAME } from './dbPersist.js';
 import { renderToday } from './today.js';
+import { newestFirst, newestFirstByMonth } from './order.js';
 import { connect as connectErrors, safe, detailsText } from './errors.js';
 import { EXTRA_SHEETS, SUBHIRE_COLS, SUBHIRE_DRIVER_COLS, addSubhireSheet, addSubhireDriverSheet, addLoanSheet, normalizeLayout, applyLayout, orderedNames } from './fileLayout.js';
 import { impactVehicle, impactClient, impactRental, impactDriver, impactText, removeVehicle, removeClient, removeRental as cascadeRemoveRental, removeDriver, syncClientName, syncCoopFromRental } from './cascade.js';
@@ -344,6 +345,8 @@ function navigateToRecord(panel, opts){
 function isClosedMonth(dateStr){
   return !!(db.period && dateStr && dateStr < db.period.start);
 }
+/* 'YYYY-MM' of a date, for ordering tables by month ('' when there is no date) */
+const ymKey = d => { const m = /^(d{4}-d{2})/.exec(String(d || '')); return m ? m[1] : ''; };
 function monthOfDate(dateStr){
   const d = new Date(dateStr+'T00:00:00');
   return monthLabel(d.getFullYear(), d.getMonth());
@@ -2525,7 +2528,7 @@ function renderVehicles(){
   refreshRentalVehicleSelect();
   const tb = document.querySelector('#vehicleTable tbody'); tb.innerHTML='';
   if(!db.vehicles.length){ tb.innerHTML = '<tr class="empty-row"><td colspan="7">No vehicles yet — add your first car above.</td></tr>'; return; }
-  db.vehicles.forEach(v=>{
+  newestFirst(db.vehicles).forEach(v=>{
     const tr = document.createElement('tr');
     tr.dataset.id = v.id;
     tr.innerHTML = `<td>${v.reg}</td><td>${v.make} ${v.model} ${v.year?('\''+String(v.year).slice(-2)):''}</td>
@@ -2603,7 +2606,7 @@ document.getElementById('btnAddDriver').addEventListener('click', ()=>{
 function renderDrivers(){
   const tb = document.querySelector('#driverTable tbody'); tb.innerHTML='';
   if(!db.drivers.length){ tb.innerHTML = '<tr class="empty-row"><td colspan="8">No drivers yet.</td></tr>'; return; }
-  db.drivers.forEach(d=>{
+  newestFirst(db.drivers).forEach(d=>{
     const v = db.vehicles.find(v=>v.id==d.vehicleId);
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${d.name}</td><td>${d.phone||'—'}</td><td>${d.license||'—'}</td>
@@ -2771,7 +2774,7 @@ function renderClients(){
   const tb = document.querySelector('#clientTable tbody'); tb.innerHTML='';
   if(!db.clients.length){ tb.innerHTML = '<tr class="empty-row"><td colspan="9">No clients yet.</td></tr>'; return; }
   const typeFilter = (document.getElementById('c_typeFilter')||{}).value || '';
-  db.clients.filter(c=>!typeFilter || normalizeClientType(c.type||'walkin').toLocaleLowerCase()===normalizeClientType(typeFilter).toLocaleLowerCase()).forEach(c=>{
+  newestFirst(db.clients.filter(c=>!typeFilter || normalizeClientType(c.type||'walkin').toLocaleLowerCase()===normalizeClientType(typeFilter).toLocaleLowerCase())).forEach(c=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHTML(c.name||'')}</td><td>${escapeHTML(clientTypeLabel(c.type||'walkin'))}</td><td>${escapeHTML(c.phone||'—')}</td><td>${escapeHTML(c.area||'—')}</td><td>${escapeHTML(c.idnum||'—')}</td><td>${escapeHTML(c.dl||'—')}</td><td>${escapeHTML(c.driverName ? c.driverName + (c.driverPhone ? ' · ' + c.driverPhone : '') : '—')}</td>
       <td><button class="row-edit row-extract" data-id="${c.id}" title="Start a rental for this client" style="width:auto;padding:0 8px;">↗ Rental</button><button class="row-edit" data-id="${c.id}">✎</button><button class="row-del" data-id="${c.id}">✕</button></td>`;
@@ -3030,7 +3033,7 @@ function renderBookings(){
   const tb = document.querySelector('#bookingTable tbody'); tb.innerHTML='';
   if(!db.bookings.length){ tb.innerHTML = '<tr class="empty-row"><td colspan="8">No bookings yet.</td></tr>'; renderBookingReminders(); return; }
   let lastMonth = null;
-  [...db.bookings].sort((a,b)=>new Date(b.pickup)-new Date(a.pickup)).forEach(bk=>{
+  newestFirstByMonth(db.bookings, bk=>ymKey(bk.pickup)).forEach(bk=>{
     const rowMonth = monthOfDate(bk.pickup);
     if(rowMonth !== lastMonth){ tb.appendChild(monthDividerRow(11, rowMonth)); lastMonth = rowMonth; }
     const v = db.vehicles.find(v=>v.id==bk.vehicleId), c = db.clients.find(c=>c.id==bk.clientId);
@@ -3293,7 +3296,7 @@ function renderRentals(){
   syncPaidFlags(); syncRentalFilterUI();
   const shownRentals = db.rentals.filter(r=>(!typeFilter || normalizeClientType(r.type||'walkin').toLocaleLowerCase()===normalizeClientType(typeFilter).toLocaleLowerCase()) && rentalPasses(r));
   if(!shownRentals.length) tb.innerHTML = '<tr class="empty-row"><td colspan="22">No rentals match these filters.</td></tr>';
-  shownRentals.sort((a,b)=>new Date(b.pickup)-new Date(a.pickup)).forEach(r=>{
+  newestFirstByMonth(shownRentals, r=>ymKey(r.pickup)).forEach(r=>{
     const drv = db.drivers.find(d=>d.id==r.driverId);
     const rowMonth = monthOfDate(r.pickup);
     if(rowMonth !== lastMonth){ tb.appendChild(monthDividerRow(22, rowMonth)); lastMonth = rowMonth; }
@@ -3542,7 +3545,7 @@ function renderExpenses(){
     updateBanners(); return;
   }
   let lastMonth = null;
-  [...visible].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(x=>{
+  newestFirstByMonth(visible, x=>ymKey(x.date)).forEach(x=>{
     const rowMonth = monthOfDate(x.date);
     if(rowMonth !== lastMonth){ tb.appendChild(monthDividerRow(8, rowMonth)); lastMonth = rowMonth; }
     const v = db.vehicles.find(v=>v.id==x.vehicleId);
@@ -3660,7 +3663,7 @@ function renderPaymentsOld(){
   let lastMonth = null;
   const shownPay = db.payments.filter(paymentPasses);
   if(!shownPay.length) tb.innerHTML = '<tr class="empty-row"><td colspan="12">No payments match these filters.</td></tr>';
-  shownPay.sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(p=>{
+  newestFirstByMonth(shownPay, p=>ymKey(p.date)).forEach(p=>{
     const rowMonth = monthOfDate(p.date);
     if(rowMonth !== lastMonth){ tb.appendChild(monthDividerRow(12, rowMonth)); lastMonth = rowMonth; }
     const r = db.rentals.find(r=>r.id==p.rentalId);
@@ -5339,7 +5342,10 @@ const importer = initImportUi(Object.assign({ renderAll: ()=>renderAll() }, pilo
 function emptyLike(src, keepPeople){
   const keep = keepPeople ? ['vehicles','drivers','clients'] : [];
   const fresh = {}; DB_LISTS.forEach(k=>{ fresh[k] = keep.includes(k) ? src[k] : []; });
-  const st = Object.assign({}, src.settings); delete st.importDecisions; delete st.overviewSnapshots;
+  /* finance kept in the settings goes too: recurring expenses (Rent ...), extra loan months, import fingerprints and saved overviews.
+     Preferences stay: admin PIN, expense categories, layouts, export choices. */
+  const st = Object.assign({}, src.settings);
+  ['importDecisions','overviewSnapshots','standingExpenses','loanExtraMonths','importMarks'].forEach(k=>{ delete st[k]; });
   fresh.settings = st; fresh.period = null;
   return normalizeDbShape(fresh);
 }
